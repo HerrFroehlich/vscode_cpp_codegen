@@ -16,17 +16,17 @@ function joinStringsWithWhiteSpace(strings:string[]):string {
     return joinStringsWithFiller(strings, "\\s*");
 }
 class NamespaceMatch {
-    constructor(rawMatch:RegExpExecArray) {
-        if (rawMatch.length !== NamespaceMatch.NOF_GROUPMATCHES+1) {
+    constructor(rawMatch:io.TextRegexMatch) {
+        if (rawMatch.groupMatches.length !== NamespaceMatch.NOF_GROUPMATCHES) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
-        else if (rawMatch[1] === undefined) {
+        else if (rawMatch.groupMatches[0] === undefined) {
             throw new Error("ParserError: No namespace name, this should not happen!");               
         }
 
-        this.nameMatch = rawMatch[1];
+        this.nameMatch = rawMatch.groupMatches[0];
 
-        this.contentMatch = (rawMatch[2]) ? rawMatch[2] : "";
+        this.contentMatch = (rawMatch.groupMatches[1]) ? rawMatch.groupMatches[1] : "";
     }
 
     private static readonly namespaceSpecifierRegex: string = "namespace\\s";
@@ -46,22 +46,22 @@ class NamespaceMatch {
 }
 
 class StandaloneFunctionMatch {
-    constructor(rawMatch:RegExpExecArray) {
-        if (rawMatch.length !== StandaloneFunctionMatch.NOF_GROUPMATCHES+1) {
+    constructor(rawMatch:io.TextRegexMatch) {
+        if (rawMatch.groupMatches.length !== StandaloneFunctionMatch.NOF_GROUPMATCHES) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
-        else if (rawMatch[1] === undefined) {
+        else if (rawMatch.groupMatches[0] === undefined) {
             throw new Error("ParserError: No function return type, this should not happen!");               
         }
 
-        else if (rawMatch[2] === undefined) {
+        else if (rawMatch.groupMatches[1] === undefined) {
             throw new Error("ParserError: No function name, this should not happen!");               
         }
 
-        this.returnValMatch = rawMatch[1];
-        this.nameMatch = rawMatch[2];
+        this.returnValMatch = rawMatch.groupMatches[0];
+        this.nameMatch = rawMatch.groupMatches[1];
 
-        this.argsMatch = (rawMatch[3]) ? rawMatch[3] : "";
+        this.argsMatch = (rawMatch.groupMatches[2]) ? rawMatch.groupMatches[2] : "";
     }
 
     static readonly REGEX_STR:string = '((?:const )?\\S*)\\s*(\\S*)\\s*\\(([\\s\\S]*?)\\)\\s*;';
@@ -73,17 +73,17 @@ class StandaloneFunctionMatch {
 }
 
 class ClassMatch {
-    constructor(rawMatch:RegExpExecArray) {
-        if (rawMatch.length !== ClassMatch.NOF_GROUPMATCHES+1) {
+    constructor(rawMatch:io.TextRegexMatch) {
+        if (rawMatch.groupMatches.length !== ClassMatch.NOF_GROUPMATCHES) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
-        else if (rawMatch[1] === undefined) {
+        else if (rawMatch.groupMatches[0] === undefined) {
             throw new Error("ParserError: No class name, this should not happen!");               
         }
 
-        this.nameMatch = rawMatch[1];
-        this.inheritanceMatch = (rawMatch[2]) ? rawMatch[2].split(",") : [];
-        this.bodyMatch = (rawMatch[3]) ? rawMatch[3] : "";
+        this.nameMatch = rawMatch.groupMatches[0];
+        this.inheritanceMatch = (rawMatch.groupMatches[1]) ? rawMatch.groupMatches[1].split(",") : [];
+        this.bodyMatch = (rawMatch.groupMatches[2]) ? rawMatch.groupMatches[2] : "";
         this.isInterface = ClassMatch.pureVirtualMemberRegexMatcher.test(this.bodyMatch);
     }
 
@@ -107,12 +107,12 @@ class ClassMatch {
 }
 class ClassProtectedScopeMatch {
 
-    constructor(rawMatch:RegExpExecArray) {
-        if (rawMatch.length !== ClassProtectedScopeMatch.NOF_GROUPMATCHES+1) {
+    constructor(rawMatch:io.TextRegexMatch) {
+        if (rawMatch.groupMatches.length !== ClassProtectedScopeMatch.NOF_GROUPMATCHES) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
 
-        this.scopeContent = (rawMatch[1]) ? rawMatch[1] : "";
+        this.scopeContent = (rawMatch.groupMatches[0]) ? rawMatch.groupMatches[0] : "";
     }
 
     static readonly REGEX_STR:string = "protected:((?:(?!private:)(?!public:)[\\s\\S])*)";
@@ -122,12 +122,12 @@ class ClassProtectedScopeMatch {
 }
 class ClassPublicScopeMatch {
 
-    constructor(rawMatch:RegExpExecArray) {
-        if (rawMatch.length !== ClassPublicScopeMatch.NOF_GROUPMATCHES+1) {
+    constructor(rawMatch:io.TextRegexMatch) {
+        if (rawMatch.groupMatches.length !== ClassPublicScopeMatch.NOF_GROUPMATCHES) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
 
-        this.scopeContent = (rawMatch[1]) ? rawMatch[1] : "";
+        this.scopeContent = (rawMatch.groupMatches[0]) ? rawMatch.groupMatches[0] : "";
     }
 
     static readonly REGEX_STR:string = "public:((?:(?!private:)(?!protected:)[\\s\\S])*)";
@@ -137,28 +137,28 @@ class ClassPublicScopeMatch {
 }
 
 class MemberFunctionMatch {
-    constructor(rawMatch:RegExpExecArray) {
-        if (rawMatch.length !== MemberFunctionMatch.NOF_GROUPMATCHES+1) {
+    constructor(rawMatch:io.TextRegexMatch) {
+        if (rawMatch.groupMatches.length !== MemberFunctionMatch.NOF_GROUPMATCHES) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
-        else if (rawMatch[1] === undefined) {
+        else if (rawMatch.groupMatches[1] === undefined) {
             throw new Error("ParserError: No function name, this should not happen!");               
         }
 
         let virtualMatcher = new RegExp (MemberFunctionMatch.virtualSubMatchRegex);
-        let match = virtualMatcher.exec(rawMatch[1]);
+        let match = virtualMatcher.exec(rawMatch.groupMatches[0]);
         if (!match || !match[2]) {
             throw new Error("ParserError: No function return type, this should not happen!");               
         }
         this.virtualMatch = (match[1]) ? true : false;
         this.returnValMatch = match[2];
 
-        this.nameMatch = rawMatch[2];
-        this.argsMatch = (rawMatch[3]) ? rawMatch[3] : "";
-        this.constMatch = (rawMatch[4]) ? true : false;
+        this.nameMatch = rawMatch.groupMatches[1];
+        this.argsMatch = (rawMatch.groupMatches[2]) ? rawMatch.groupMatches[2] : "";
+        this.constMatch = (rawMatch.groupMatches[3]) ? true : false;
 
-        this.virtualMatch = (this.virtualMatch) || ((rawMatch[5]) ? true : false);
-        this.pureMatch = (rawMatch[6]) ? true : false;
+        this.virtualMatch = (this.virtualMatch) || ((rawMatch.groupMatches[4]) ? true : false);
+        this.pureMatch = (rawMatch.groupMatches[5]) ? true : false;
         if (!this.virtualMatch && this.pureMatch) {
            throw new Error("ParserError: Invalid specifier combination: '=0' missing virtual for function: " + this.nameMatch);
            return;
@@ -254,7 +254,7 @@ export abstract class Parser {
     static parseNamespaces(data:io.TextFragment): cpptypes.INamespace[]  {
         let namespaces:cpptypes.INamespace[] = [];
 
-        let generateNewNamespace = (rawMatch: RegExpExecArray) => {
+        let generateNewNamespace = (rawMatch: io.TextRegexMatch) => {
             let match = new NamespaceMatch(rawMatch);
             let newNamespace = new cpptypes.Namespace(match.nameMatch);
             let newData = new io.TextFragment(match.contentMatch);
@@ -300,7 +300,7 @@ export abstract class Parser {
     static parseClasses(data:io.TextFragment):cpptypes.IClass[] {
         let classes: cpptypes.IClass[] = [];
         
-        let generateNewClass = (rawMatch: RegExpExecArray) => {
+        let generateNewClass = (rawMatch: io.TextRegexMatch) => {
             let match = new ClassMatch(rawMatch);
             let newClass = match.isInterface? new cpptypes.ClassInterface(match.nameMatch, match.inheritanceMatch) : new cpptypes.ClassImpl(match.nameMatch, match.inheritanceMatch);
             let newData = new io.TextFragment(match.bodyMatch);

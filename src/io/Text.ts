@@ -15,6 +15,19 @@ export class TextScope {
     }
 }
 
+export class TextRegexMatch extends TextScope {
+    
+    fullMatch:string;
+    groupMatches:string[];
+    
+    constructor(execMatch:RegExpExecArray, scopeOffset:number) {
+
+        const scopeStart = scopeOffset + execMatch.index
+        super(scopeStart, scopeStart + execMatch[0].length-1);
+        this.fullMatch = execMatch[0];
+        this.groupMatches = execMatch.slice(1);
+    }
+}
 
 export class TextBlock extends TextScope {
     public readonly content:string;
@@ -47,7 +60,7 @@ export class TextBlock extends TextScope {
         return splittedBlocks;
      } 
 
-     matchAndRemove (regex:string, onMatch: (rawMatch:RegExpExecArray) => void):TextBlock[] {
+     matchAndRemove (regex:string, onMatch: (rawMatch:TextRegexMatch) => void):TextBlock[] {
         let splittedBlocks:TextBlock[] = [];
         const regexMatcher = new RegExp(regex, 'g'); 
         let rawMatch:any;
@@ -79,7 +92,7 @@ export class TextBlock extends TextScope {
             }
 
             lastEnd = matchEnd;
-            onMatch(rawMatch);
+            onMatch(new TextRegexMatch(rawMatch, this.scopeStart));
         }
         tryTriggerPostponed();
         if (!splittedBlocks.length) {
@@ -98,7 +111,7 @@ export class TextFragment {
         }
     }
 
-    matchAndRemove(regex:string, onMatch: (rawMatch:RegExpExecArray) => void) {
+    matchAndRemove(regex:string, onMatch: (rawMatch:TextRegexMatch) => void) {
         for (let index = this.blocks.length-1; index >= 0; index--) {
             const block = this.blocks[index];
             
