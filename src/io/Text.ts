@@ -71,9 +71,8 @@ export class TextBlock extends TextScope {
             const matchEnd = matchStart + matchLength-1;
 
             if (matchStart > lastEnd) {
-                //split now
-                splittedBlocks = splittedBlocks.concat(this._removeRelative(matchStart,matchEnd));
                 tryTriggerPostponed();
+                splittedBlocks = splittedBlocks.concat(this._removeRelative(matchStart,matchEnd));
             } else if (!isPostponing) {
                 isPostponing = true;
                 lastStart = matchStart;
@@ -83,14 +82,20 @@ export class TextBlock extends TextScope {
             onMatch(rawMatch);
         }
         tryTriggerPostponed();
+        if (!splittedBlocks.length) {
+            splittedBlocks.push(this);
+        }
+
         return splittedBlocks;
     }
 }
 
 export class TextFragment {
-    readonly blocks:TextBlock[];
+    readonly blocks:TextBlock[] = [];
     constructor(content:string) {
-        this.blocks = [new TextBlock(content)];
+        if (content.length) {
+            this.blocks = [new TextBlock(content)];            
+        }
     }
 
     matchAndRemove(regex:string, onMatch: (rawMatch:RegExpExecArray) => void) {
