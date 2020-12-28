@@ -4,7 +4,7 @@ import { Done, describe} from 'mocha';
 // import * as myExtension from '../../extension';
 import {Parser} from '../../Parser';
 import {INamespace, Namespace} from '../../cpptypes';
-import {DeseralizationData} from '../../io';
+import {TextFragment} from '../../io';
 import { callItAsync } from "./utils";
 class TestData {
 	constructor(public content:string, public nClasses:number, public nFunc:number){};
@@ -34,7 +34,7 @@ suite('Parser Namespace Tests', () => {
 
 	describe('ParseSingleNamespace', function() {
 		callItAsync("With content ${value}", namespacesData, function (done:Done, data:TestData) {
-			const testData = new DeseralizationData( 
+			const testData = new TextFragment( 
 			`
 				namespace namespaceName
 				{
@@ -57,7 +57,7 @@ suite('Parser Namespace Tests', () => {
 
 	describe('ParseMultipleNamespaces', function() {
 		callItAsync("With content ${value}", namespacesData, function (done:Done, data:TestData) {
-			const testData = new DeseralizationData( 
+			const testData = new TextFragment( 
 			`
 				namespace namespaceName{${data.content}}			
 				namespace namespaceName2{
@@ -82,7 +82,7 @@ suite('Parser Namespace Tests', () => {
 
 	describe('ParseMultipleNestedNamespaces', function() {
 		callItAsync("With content ${value}", namespacesData, function (done:Done, data:TestData) {
-			const testData = new DeseralizationData( 
+			const testData = new TextFragment( 
 			`
 				namespace namespaceName
 				{
@@ -120,7 +120,7 @@ suite('Parser Namespace Tests', () => {
 
 	describe('ParseNestedMultipleNamespaces', function() {
 		callItAsync("With content ${value}", namespacesData, function (done:Done, data:TestData) {
-			const testData = new DeseralizationData( 
+			const testData = new TextFragment( 
 			`
 				namespace namespaceName
 				{

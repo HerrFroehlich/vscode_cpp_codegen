@@ -1,6 +1,6 @@
 import { IClass, IFunction, SerializableMode } from "./TypeInterfaces";
 import {Parser} from "../Parser";
-import { ClassNameGenerator, DeseralizationData } from "../io";
+import { ClassNameGenerator, TextFragment } from "../io";
 
 class ClassBase implements IClass {
     constructor(    
@@ -9,17 +9,17 @@ class ClassBase implements IClass {
         
     }
 
-    deserialize (data: DeseralizationData) {
+    deserialize (data: TextFragment) {
         
         this.nestedClasses = this.nestedClasses.concat(Parser.parseClasses(data));
 
-        const privateContent:DeseralizationData = Parser.parseClassPrivateScope(data);
+        const privateContent:TextFragment = Parser.parseClassPrivateScope(data);
         this.privateFunctions = Parser.parseClassMemberFunctions(privateContent, this.classNameGen);
 
-        const publicContent:DeseralizationData = Parser.parseClassPublicScope(data);
+        const publicContent:TextFragment = Parser.parseClassPublicScope(data);
         this.publicFunctions = Parser.parseClassMemberFunctions(publicContent, this.classNameGen);
 
-        const protectedContent:DeseralizationData = Parser.parseClassProtectedScope(data);
+        const protectedContent:TextFragment = Parser.parseClassProtectedScope(data);
         this.protectedFunctions = Parser.parseClassMemberFunctions(protectedContent, this.classNameGen);
     }
 

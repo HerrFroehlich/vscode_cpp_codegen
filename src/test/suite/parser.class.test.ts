@@ -9,7 +9,7 @@ import {Parser} from '../../Parser';
 import {IClass, ClassInterface, ClassImpl} from '../../cpptypes';
 import { callItAsync } from "./utils";
 
-import { DeseralizationData } from '../../io';
+import { TextFragment } from '../../io';
 
 const argData = ["", "int test", "int test1, const Class* test2, void* test3", "int \ttest1,\t\n const\n Class* test2"];
 class TestData {
@@ -41,7 +41,7 @@ new TestData(" :\tpublic IInterface, private IInterface2", 2), new TestData(": p
 suite('Parser GeneralClasses Tests', () => {
 
 	test('ParseClassWithoutMemberFunctions', (done) => {
-		const testContent = new DeseralizationData(
+		const testContent = new TextFragment(
 		`class MyClass {       // The class
 			int myNum;        // Attribute (int variable)
 			string myString;  // Attribute (string variable)
@@ -61,7 +61,7 @@ suite('Parser GeneralClasses Tests', () => {
 	});
 
 	test('ParseInterface', (done) => {
-		const testContent = new DeseralizationData(
+		const testContent = new TextFragment(
 		`class MyClass {       // The class
 			virtual const int* pureFnct = 0  ;
 		  };
@@ -83,7 +83,7 @@ suite('Parser GeneralClasses Tests', () => {
 
 	describe('ParseInheritance', function() {
 		callItAsync("With inheritance ${value}", inheritData, function (done:Done, inheritData:TestData) {
-		const testContent = new DeseralizationData(
+		const testContent = new TextFragment(
 		`class MyClass ${inheritData.content}  {  // The class
 		  };
 		`
@@ -103,7 +103,7 @@ suite('Parser GeneralClasses Tests', () => {
 	});
 
 	test('ParseMultipleClassesWithoutMemberFunctions', (done) => {
-		const testContent = new DeseralizationData(
+		const testContent = new TextFragment(
 		`class MyClass1 {       // The class
 			int myNum;        // Attribute (int variable)
 			string myString;  // Attribute (string variable)
@@ -134,7 +134,7 @@ suite('Parser GeneralClasses Tests', () => {
 	});
 
 	test('ParseNestedClassesWithoutMemberFunctions', (done) => {
-		const testContent = new DeseralizationData(
+		const testContent = new TextFragment(
 		`class MyClass {       // The class
 			int myNum;        // Attribute (int variable)
 			string myString;  // Attribute (string variable)		
@@ -168,7 +168,7 @@ suite('Parser GeneralClasses Tests', () => {
 	
 	
 	test('ParseNestedAndMultipleClassesWithoutMemberFunctions', (done) => {
-		const testContent = new DeseralizationData(
+		const testContent = new TextFragment(
 		`class MyClass {       // The class
 			int myNum;        // Attribute (int variable)
 			string myString;  // Attribute (string variable)		
@@ -214,7 +214,7 @@ suite('Parser GeneralClasses Tests', () => {
 
 	describe('ParseClassWithImplicitPrivateMemberFunctions', function() {
 		callItAsync("With functions ${value}", functionData, function (done:Done, functionTestData:TestData) {
-			const testContent = new DeseralizationData(
+			const testContent = new TextFragment(
 			`class MyClass {
 				${functionTestData.content}
 			};
@@ -234,7 +234,7 @@ suite('Parser GeneralClasses Tests', () => {
 
 	describe('ParseClassWithExplicitPrivateMemberFunctions', function() {
 		callItAsync("With functions ${value}", functionData, function (done:Done, functionTestData:TestData) {
-			const testContent = new DeseralizationData(
+			const testContent = new TextFragment(
 			`class MyClass {
 			private:
 				${functionTestData.content}
@@ -255,7 +255,7 @@ suite('Parser GeneralClasses Tests', () => {
 
 	describe('ParseClassWithPublicMemberFunctions', function() {
 		callItAsync("With functions ${value}", functionData, function (done:Done, functionTestData:TestData) {
-			const testContent = new DeseralizationData(
+			const testContent = new TextFragment(
 			`class MyClass {
 			public:
 				${functionTestData.content}
@@ -276,7 +276,7 @@ suite('Parser GeneralClasses Tests', () => {
 
 	describe('ParseClassWithProtectedMemberFunctions', function() {
 		callItAsync("With functions ${value}", functionData, function (done:Done, functionTestData:TestData) {
-			const testContent = new DeseralizationData(
+			const testContent = new TextFragment(
 			`class MyClass {
 			protected:
 				${functionTestData.content}
@@ -297,7 +297,7 @@ suite('Parser GeneralClasses Tests', () => {
 
 	describe('ParseClassWithVariousMemberFunctions', function() {
 		callItAsync("With functions ${value}", functionData, function (done:Done, functionTestData:TestData) {
-			const testContent = new DeseralizationData(
+			const testContent = new TextFragment(
 			`class MyClass {
 			private:
 				${functionTestData.content}

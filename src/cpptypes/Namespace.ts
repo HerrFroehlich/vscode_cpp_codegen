@@ -1,6 +1,6 @@
 import { IClass, IFunction, INamespace, SerializableMode} from "./TypeInterfaces";
 import {Parser} from "../Parser";
-import {DeseralizationData} from "../io";
+import {TextFragment} from "../io";
 export class Namespace implements INamespace {
     
     constructor(name:string, subnamespaces:INamespace[] = []) {
@@ -14,7 +14,7 @@ export class Namespace implements INamespace {
         return "";
     }
 
-    deserialize (data: DeseralizationData) {
+    deserialize (data: TextFragment) {
         this.subnamespaces = Parser.parseNamespaces(data);
         this.classes = Parser.parseClasses(data);
         this.functions = Parser.parseStandaloneFunctiones(data);
@@ -39,7 +39,7 @@ export class NoneNamespace implements INamespace {
         return "";
     }
 
-    deserialize (data: DeseralizationData) {
+    deserialize (data: TextFragment) {
         this.classes = Parser.parseClasses(data);
         this.functions = Parser.parseStandaloneFunctiones(data);
     }
