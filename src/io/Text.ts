@@ -21,7 +21,12 @@ export class TextRegexMatch extends TextScope {
     fullMatch:string;
     groupMatches:string[];
     
-    constructor(matches:Array<string>, scopeStart:number) {
+
+    static fromRegexExec(execMatch:RegExpExecArray, scopeOffset:number) {
+        return new TextRegexMatch(execMatch, scopeOffset + execMatch.index);
+    }
+
+    private constructor(matches:Array<string>, scopeStart:number) {
 
         super(scopeStart, scopeStart + matches[0].length-1);
         this.fullMatch = matches[0];
@@ -102,7 +107,7 @@ export class TextBlock extends TextScope {
             }
 
             lastEnd = matchEnd;
-            onMatch(new TextRegexMatch(rawMatch, this.scopeStart + rawMatch.index));
+            onMatch(TextRegexMatch.fromRegexExec(rawMatch, this.scopeStart));
         }
         tryTriggerPostponed();
         if (!splittedBlocks.length) {
