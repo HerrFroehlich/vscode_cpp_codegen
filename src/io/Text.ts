@@ -1,4 +1,5 @@
 import { assert } from "console";
+import { off } from "process";
 
 export class TextScope {
     constructor(public readonly scopeStart:number,
@@ -20,12 +21,21 @@ export class TextRegexMatch extends TextScope {
     fullMatch:string;
     groupMatches:string[];
     
-    constructor(execMatch:RegExpExecArray, scopeOffset:number) {
+    constructor(matches:Array<string>, scopeStart:number) {
 
-        const scopeStart = scopeOffset + execMatch.index
-        super(scopeStart, scopeStart + execMatch[0].length-1);
-        this.fullMatch = execMatch[0];
-        this.groupMatches = execMatch.slice(1);
+        super(scopeStart, scopeStart + matches[0].length-1);
+        this.fullMatch = matches[0];
+        this.groupMatches = matches.slice(1);
+    }
+    
+    getGroupMatchScope(index:number): TextRegexMatch|undefined {
+        assert(index < this.groupMatches.length, "Group match index out of bounds ");
+        const groupMatch = this.groupMatches[index];
+        if (groupMatch && groupMatch.length) {
+            const offset = this.fullMatch.indexOf(groupMatch);
+            return new TextRegexMatch([groupMatch], this.scopeStart+offset);
+        }
+        return undefined;
     }
 }
 
@@ -92,7 +102,7 @@ export class TextBlock extends TextScope {
             }
 
             lastEnd = matchEnd;
-            onMatch(new TextRegexMatch(rawMatch, this.scopeStart));
+            onMatch(new TextRegexMatch(rawMatch, this.scopeStart + rawMatch.index));
         }
         tryTriggerPostponed();
         if (!splittedBlocks.length) {
