@@ -44,7 +44,7 @@ export class TextRegexMatch extends TextScope {
     }
 }
 
-export class TextBlock extends TextScope {
+class TextBlock extends TextScope {
     public readonly content:string;
     constructor(content:string,
                 scopeOffset:number = 0) {
@@ -53,7 +53,7 @@ export class TextBlock extends TextScope {
                     this.content = content;
                 }
     
-    private _removeRelative(start:number,
+    private removeRelative(start:number,
             end:number):TextBlock[] {
         let splittedBlocks:TextBlock[] =  [];
         assert(end >= start, "End must be greater than start");
@@ -75,8 +75,9 @@ export class TextBlock extends TextScope {
         return splittedBlocks;
      } 
 
-     matchAndRemove (regex:string, onMatch: (rawMatch:TextRegexMatch) => void):TextBlock[] {
-        let splittedBlocks:TextBlock[] = [];
+     removeMatching (regex:string):[TextBlock[], TextRegexMatch[]] {
+        const splittedBlocks:TextBlock[] = [];
+        const regexMatches:TextRegexMatch[] = []; 
         const regexMatcher = new RegExp(regex, 'g'); 
         let rawMatch:any;
         let lastEnd:number = -1;
@@ -85,7 +86,8 @@ export class TextBlock extends TextScope {
 
         const tryTriggerPostponed = () => {
             if (isPostponing) {
-                splittedBlocks = splittedBlocks.concat(this._removeRelative(lastStart,lastEnd));
+                splittedBlocks.push(...this.removeRelative(lastStart,lastEnd));
+                isPostponing = false;
             }
         };
         while ((rawMatch = regexMatcher.exec(this.content)) !== null) 
@@ -100,21 +102,22 @@ export class TextBlock extends TextScope {
 
             if (matchStart > lastEnd) {
                 tryTriggerPostponed();
-                splittedBlocks = splittedBlocks.concat(this._removeRelative(matchStart,matchEnd));
+                splittedBlocks.push(...this.removeRelative(matchStart,matchEnd));
             } else if (!isPostponing) {
                 isPostponing = true;
                 lastStart = matchStart;
             }
 
             lastEnd = matchEnd;
-            onMatch(TextRegexMatch.fromRegexExec(rawMatch, this.scopeStart));
+            regexMatches.push(TextRegexMatch.fromRegexExec(rawMatch, this.scopeStart));
         }
+
         tryTriggerPostponed();
         if (!splittedBlocks.length) {
             splittedBlocks.push(this);
         }
 
-        return splittedBlocks;
+        return [splittedBlocks, regexMatches];
     }
 }
 
@@ -126,11 +129,14 @@ export class TextFragment {
         }
     }
 
-    matchAndRemove(regex:string, onMatch: (rawMatch:TextRegexMatch) => void) {
+    removeMatching(regex:string):TextRegexMatch[] {
+        const regexMatches:TextRegexMatch[] = [];
         for (let index = this.blocks.length-1; index >= 0; index--) {
             const block = this.blocks[index];
-            
-            this.blocks.splice(index, 1, ...block.matchAndRemove(regex, onMatch));
+            const matchResult = block.removeMatching(regex);
+            this.blocks.splice(index, 1, ...matchResult[0]);
+            regexMatches.push(...matchResult[1]);
         }
+        return regexMatches;
     }
 }
