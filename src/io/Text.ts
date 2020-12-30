@@ -14,6 +14,26 @@ export class TextScope {
     contains(other:TextScope):boolean {
         return (other.scopeStart <= this.scopeEnd) && (other.scopeEnd >= this.scopeStart);
     }
+
+    static merge(...scopes:TextScope[]):TextScope[] {
+        const mergedScopes:TextScope[] = [];
+
+        scopes.sort((a,b) => {
+            return a.scopeStart - b.scopeStart;
+        });
+
+        for (let index = 0; index < scopes.length-1; index++) {
+            const scope = scopes[index];
+            const nextScope = scopes[index+1];
+
+            if (scope.contains(nextScope)) {
+                mergedScopes.push(new TextScope(scope.scopeStart, nextScope.scopeEnd));
+            } else {
+                mergedScopes.push(scope);
+            }
+        }
+        return mergedScopes;
+    }
 }
 
 export class TextRegexMatch extends TextScope {
@@ -44,7 +64,7 @@ export class TextRegexMatch extends TextScope {
     }
 }
 
-class TextBlock extends TextScope {
+export class TextBlock extends TextScope {
     public readonly content:string;
     constructor(content:string,
                 scopeOffset:number = 0) {
