@@ -5,6 +5,8 @@ export class TextScope {
     constructor(public readonly scopeStart:number,
                 public readonly scopeEnd:number) {
                     assert(scopeStart <= scopeEnd, "scopeEnd must be greater than scopeStart");
+                    assert(scopeStart>=0, "Scope start muss be greater zero!");
+                    assert(scopeEnd>=0, "Scope end muss be greater zero!");
                 }
 
     fullyContains(other:TextScope):boolean {
@@ -16,20 +18,27 @@ export class TextScope {
     }
 
     static merge(...scopes:TextScope[]):TextScope[] {
-        const mergedScopes:TextScope[] = [];
 
-        scopes.sort((a,b) => {
+        if (scopes.length <= 1) {
+            return scopes;
+        }
+
+        const mergedScopes:TextScope[] = [];
+        scopes = scopes.sort((a,b) => {
             return a.scopeStart - b.scopeStart;
         });
 
-        for (let index = 0; index < scopes.length-1; index++) {
-            const scope = scopes[index];
-            const nextScope = scopes[index+1];
+        for (let index = 1; index < scopes.length; index++) {
+            const scope = scopes[index-1];
+            const nextScope = scopes[index];
 
             if (scope.contains(nextScope)) {
                 mergedScopes.push(new TextScope(scope.scopeStart, nextScope.scopeEnd));
             } else {
                 mergedScopes.push(scope);
+                if (index === scopes.length-1) {
+                    mergedScopes.push(nextScope);
+                }
             }
         }
         return mergedScopes;
@@ -73,22 +82,33 @@ export class TextBlock extends TextScope {
                     this.content = content;
                 }
     
-    private removeRelative(start:number,
-            end:number):TextBlock[] {
+    private removeScope(...scopes:TextScope[]):TextBlock[] {
         let splittedBlocks:TextBlock[] =  [];
-        assert(end >= start, "End must be greater than start");
-        assert(start >= 0, "Start must be greater than 0");
-        assert(end >= 0, "End must be greater than 0");
-        
-        const contentLength = this.content.length; 
-        if (start < contentLength) {
-            if (start > 0) {
-                splittedBlocks.push(new TextBlock(this.content.substr(0,start), this.scopeStart));
-            }            
-            if (end+1 < contentLength) {
-                splittedBlocks.push(new TextBlock(this.content.substr(end+1), this.scopeStart + end+1));            
+        scopes = TextScope.merge(...scopes);
+        let lastStart = this.scopeStart;
+
+        const trySliceContent = (start:number, end:number) => {
+            let startRel = start-this.scopeStart;
+            startRel = (startRel < 0) ? 0 : startRel;
+            let endRel = end-this.scopeStart;
+            endRel = (endRel < 0) ? 0 : endRel;
+            if (endRel > startRel) {
+                splittedBlocks.push(new TextBlock(this.content.slice(startRel,endRel), this.scopeStart+start));
             }
-        } else {
+        };
+
+        scopes.forEach(
+            (scope, index) => {
+                trySliceContent(lastStart,scope.scopeStart);
+                lastStart = scope.scopeEnd+1;
+                
+                if(index === scopes.length-1) {
+                    trySliceContent(scope.scopeEnd+1,this.content.length);
+                }
+            }
+        );
+
+        if (!splittedBlocks.length) {
             splittedBlocks.push(this);
         }
 
@@ -96,48 +116,19 @@ export class TextBlock extends TextScope {
      } 
 
      removeMatching (regex:string):[TextBlock[], TextRegexMatch[]] {
-        const splittedBlocks:TextBlock[] = [];
         const regexMatches:TextRegexMatch[] = []; 
         const regexMatcher = new RegExp(regex, 'g'); 
-        let rawMatch:any;
-        let lastEnd:number = -1;
-        let lastStart:number = 0;
-        let isPostponing:boolean = false;
 
-        const tryTriggerPostponed = () => {
-            if (isPostponing) {
-                splittedBlocks.push(...this.removeRelative(lastStart,lastEnd));
-                isPostponing = false;
-            }
-        };
+        let rawMatch:any;
         while ((rawMatch = regexMatcher.exec(this.content)) !== null) 
         {
             if (rawMatch.index === regexMatcher.lastIndex) {
                 regexMatcher.lastIndex++;
             }
-
-            const matchLength = rawMatch[0].length;
-            const matchStart = rawMatch.index;
-            const matchEnd = matchStart + matchLength-1;
-
-            if (matchStart > lastEnd) {
-                tryTriggerPostponed();
-                splittedBlocks.push(...this.removeRelative(matchStart,matchEnd));
-            } else if (!isPostponing) {
-                isPostponing = true;
-                lastStart = matchStart;
-            }
-
-            lastEnd = matchEnd;
             regexMatches.push(TextRegexMatch.fromRegexExec(rawMatch, this.scopeStart));
         }
 
-        tryTriggerPostponed();
-        if (!splittedBlocks.length) {
-            splittedBlocks.push(this);
-        }
-
-        return [splittedBlocks, regexMatches];
+        return [this.removeScope(...regexMatches), regexMatches];
     }
 }
 

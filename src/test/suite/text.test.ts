@@ -45,8 +45,7 @@ suite('Text Utility Tests', () => {
 
 		done();
 	});
-	
-	
+
 	test('TextScope merge', (done) => {
 		const testContent = "This is a test message";
 		const subStrStart = 0;
@@ -61,6 +60,26 @@ suite('Text Utility Tests', () => {
 		assert.strictEqual(mergedScopes.length,1);
 		assert.strictEqual(mergedScopes[0].scopeStart, textBlock1.scopeStart);
 		assert.strictEqual(mergedScopes[0].scopeEnd, textBlock2.scopeEnd);
+
+		done();
+	});
+
+	test('TextScope not merge', (done) => {
+		const testContent = "This is a test message";
+		const subStrStart = 0;
+		const subStrEnd = 8;
+		const subStrStart2 = 9;
+		const subStrEnd2 = 12;
+		const textBlock1 = new io.TextBlock(testContent.slice(subStrStart,subStrEnd), subStrStart);
+		const textBlock2 = new io.TextBlock(testContent.slice(subStrStart2,subStrEnd2), subStrStart2);
+
+		const mergedScopes = io.TextScope.merge(textBlock1, textBlock2);
+
+		assert.strictEqual(mergedScopes.length,2);
+		assert.strictEqual(mergedScopes[0].scopeStart, textBlock1.scopeStart);
+		assert.strictEqual(mergedScopes[0].scopeEnd, textBlock1.scopeEnd);
+		assert.strictEqual(mergedScopes[1].scopeStart, textBlock2.scopeStart);
+		assert.strictEqual(mergedScopes[1].scopeEnd, textBlock2.scopeEnd);
 
 		done();
 	});
@@ -90,7 +109,7 @@ suite('Text Utility Tests', () => {
 		let testContent = "";
 		const regex = "test";
 		const spaceStr = "[SPACE]";
-		const iter = 5;
+		const iter = 20;
 		for (let i = 0; i < iter; i++) {
 			testContent += spaceStr+regex;
 		}
@@ -102,7 +121,7 @@ suite('Text Utility Tests', () => {
 		assert.strictEqual(matches.length,iter);
 		for (let index = 0; index < iter; index++) {			
 			assert.strictEqual(slicedBlocks[index].content, spaceStr);
-			const start = index*testContent.length;
+			const start = index*(spaceStr+regex).length;
 			assert.strictEqual(slicedBlocks[index].scopeStart, start);
 			assert.strictEqual(slicedBlocks[index].scopeEnd, start+spaceStr.length-1);
 			assert.strictEqual(matches[index].fullMatch, regex);
