@@ -122,10 +122,96 @@ suite('Text Utility Tests', () => {
 		for (let index = 0; index < iter; index++) {			
 			assert.strictEqual(slicedBlocks[index].content, spaceStr);
 			const start = index*(spaceStr+regex).length;
+			const end = start+spaceStr.length-1;
 			assert.strictEqual(slicedBlocks[index].scopeStart, start);
-			assert.strictEqual(slicedBlocks[index].scopeEnd, start+spaceStr.length-1);
+			assert.strictEqual(slicedBlocks[index].scopeEnd, end);
+
 			assert.strictEqual(matches[index].fullMatch, regex);
+			assert.strictEqual(matches[index].scopeStart, end+1);
+			assert.strictEqual(matches[index].scopeEnd, end+regex.length);
 		}
+
+		done();
+	});
+
+	test('Textblock removes single  regex non match', (done) => {
+		const testContent = "This is a test message";
+		const regex = "test";
+		const textBlock = new io.TextBlock(testContent);
+
+		const [slicedBlocks, matches] = textBlock.removeNotMatching(regex);
+		
+		assert.strictEqual(slicedBlocks.length,1);
+		assert.strictEqual(slicedBlocks[0].content, "test");
+		assert.strictEqual(slicedBlocks[0].scopeStart, testContent.indexOf(regex));
+		assert.strictEqual(slicedBlocks[0].scopeEnd, testContent.indexOf(regex)+regex.length-1);
+
+		assert.strictEqual(matches.length,2);
+		assert.strictEqual(matches[0].fullMatch, "This is a ");
+		assert.strictEqual(matches[1].fullMatch, " message");
+
+		done();
+	});
+
+	test('Textblock removes multiple regex not match', (done) => {
+		let testContent = "";
+		const regex = "test";
+		const spaceStr = "[SPACE]";
+		const iter = 20;
+		for (let i = 0; i < iter; i++) {
+			testContent += regex+spaceStr;
+		}
+		const textBlock = new io.TextBlock(testContent);
+
+		const [slicedBlocks, matches] = textBlock.removeNotMatching(regex);
+		
+		assert.strictEqual(slicedBlocks.length,iter);
+		assert.strictEqual(matches.length,iter);
+		for (let index = 0; index < iter; index++) {			
+			assert.strictEqual(slicedBlocks[index].content, regex);
+			const start = index*(spaceStr+regex).length;
+			const end = start+regex.length-1;
+			assert.strictEqual(slicedBlocks[index].scopeStart, start);
+			assert.strictEqual(slicedBlocks[index].scopeEnd, end);
+
+			assert.strictEqual(matches[index].fullMatch, spaceStr);
+			assert.strictEqual(matches[index].scopeStart, end+1);
+			assert.strictEqual(matches[index].scopeEnd, end+spaceStr.length);
+		}
+
+		done();
+	});
+
+	test('Textfragment removes multiple regex match', (done) => {
+		let testContent = "";
+		const regex = "test";
+		const spaceStr = "[SPACE]";
+		const iter = 20;
+		for (let i = 0; i < iter; i++) {
+			testContent += spaceStr+regex;
+		}
+		const textFrag = new io.TextFragment(testContent);
+
+		const matches = textFrag.removeMatching(regex);
+		assert.strictEqual(matches.length,iter);
+		assert.strictEqual(textFrag.blocks.length,iter);
+
+		done();
+	});
+
+	test('Textfragment removes multiple regex not match', (done) => {
+		let testContent = "";
+		const regex = "test";
+		const spaceStr = "[SPACE]";
+		const iter = 20;
+		for (let i = 0; i < iter; i++) {
+			testContent += spaceStr+regex;
+		}
+		const textFrag = new io.TextFragment(testContent);
+
+		const matches = textFrag.removeNotMatching(regex);
+		assert.strictEqual(matches.length,iter);
+		assert.strictEqual(textFrag.blocks.length,iter);
 
 		done();
 	});
