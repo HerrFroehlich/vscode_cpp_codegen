@@ -1,12 +1,14 @@
-import { assert } from "console";
-import { off } from "process";
-
+function error(condition:boolean, errMsg:string = "") {
+    if (!condition) {
+        throw new Error(errMsg);
+    }
+}
 export class TextScope {
     constructor(public readonly scopeStart:number,
                 public readonly scopeEnd:number) {
-                    assert(scopeStart <= scopeEnd, "scopeEnd must be greater than scopeStart");
-                    assert(scopeStart>=0, "Scope start muss be greater zero!");
-                    assert(scopeEnd>=0, "Scope end muss be greater zero!");
+                    error(scopeStart <= scopeEnd, "scopeEnd must be greater than scopeStart");
+                    error(scopeStart>=0, "Scope start muss be greater zero!");
+                    error(scopeEnd>=0, "Scope end muss be greater zero!");
                 }
 
     fullyContains(other:TextScope):boolean {
@@ -66,12 +68,12 @@ export class TextRegexMatch extends TextScope {
         this.groupMatches = matches.slice(1);
     }
     
-    getGroupMatchScope(index:number): TextRegexMatch|undefined {
-        assert(index < this.groupMatches.length, "Group match index out of bounds ");
+    getGroupMatchTextBlock(index:number): TextBlock|undefined {
+        error(index < this.groupMatches.length, "Group match index out of bounds ");
         const groupMatch = this.groupMatches[index];
         if (groupMatch && groupMatch.length) {
             const offset = this.fullMatch.indexOf(groupMatch);
-            return new TextRegexMatch([groupMatch], this.scopeStart+offset);
+            return new TextBlock(groupMatch, this.scopeStart+offset);
         }
         return undefined;
     }
@@ -81,7 +83,7 @@ export class TextBlock extends TextScope {
     public readonly content:string;
     constructor(content:string,
                 scopeOffset:number = 0) {
-                    assert(content.length > 0, "Content is empty");
+                    error(content.length > 0, "Content is empty");
                     super(scopeOffset, scopeOffset + content.length-1);
                     this.content = content;
                 }
@@ -133,7 +135,7 @@ export class TextBlock extends TextScope {
         return regexMatches;
      }
 
-     removeMatching (regex:string):[TextBlock[], TextRegexMatch[]] {
+    removeMatching (regex:string):[TextBlock[], TextRegexMatch[]] {
         const regexMatches:TextRegexMatch[] = this.matchContent(regex); 
         return [this.splice(regexMatches), regexMatches];
     }
@@ -159,11 +161,16 @@ export class TextBlock extends TextScope {
 
         return [remainingBlocks, inverseRegexMatches];
     }
+
+    clone():TextBlock{
+
+        return new TextBlock(this.content.slice(), this.scopeStart);    
+    }
 }
 
 export class TextFragment {
     readonly blocks:TextBlock[] = [];
-    constructor(content:string) {
+    constructor(content:string = "") {
         if (content.length) {
             this.blocks = [new TextBlock(content)];            
         }
@@ -189,5 +196,19 @@ export class TextFragment {
             inverseRegexMatches.push(...matchResult[1]);
         }
         return inverseRegexMatches;
-	}
+    }
+    
+    clone():TextFragment {
+        const newFragment = new TextFragment();
+        this.blocks.forEach(
+            (block) => {
+                newFragment.blocks.push(block.clone());
+            }
+        );
+        return newFragment;
+    }
+
+    push(...blocks:TextBlock[]) {
+        this.blocks.push(...blocks);
+    }
 }

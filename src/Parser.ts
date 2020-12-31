@@ -127,13 +127,13 @@ class ClassPublicScopeMatch {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
 
-        this.scopeContent = (regexMatch.groupMatches[0]) ? regexMatch.groupMatches[0] : "";
+        this.scopeContent = regexMatch.getGroupMatchTextBlock(0);
     }
 
     static readonly REGEX_STR:string = "public:((?:(?!private:)(?!protected:)[\\s\\S])*)";
     static readonly NOF_GROUPMATCHES = 1;
 
-    readonly scopeContent:string;
+    readonly scopeContent:io.TextBlock|undefined;
 }
 
 class MemberFunctionMatch {
@@ -190,35 +190,40 @@ class MemberFunctionMatch {
 
 export abstract class Parser {
 
-    //TODO parse memberfunctions as one function and pass output arrays as arguments?
     static parseClassPrivateScope(data:io.TextFragment): io.TextFragment {
-        let publicOrPrivateRegexMatcher:RegExp = /(?:public:|protected:)((?!private:)[\s\S])*/g;
-        // let privateScope = data.remainingContent.replace(publicOrPrivateRegexMatcher, "");
-        let privateScope = "bla";
-        return new io.TextFragment(privateScope);
+        let publicOrPrivateRegex= "(?:public:|protected:)((?!private:)[\\s\\S])*";
+        const privateFragment = new io.TextFragment();
+        data.removeNotMatching(publicOrPrivateRegex).forEach(
+            (regexMatch) => {
+                privateFragment.push(new io.TextBlock(regexMatch.fullMatch, regexMatch.scopeStart));
+            });
+        return privateFragment;
     }
 
     static parseClassPublicScope(data:io.TextFragment): io.TextFragment {
-        let publicScope = "";
+        const publicFragment = new io.TextFragment();
         data.removeMatching(ClassPublicScopeMatch.REGEX_STR).forEach(
             (regexMatch) => {
                 let match = new ClassPublicScopeMatch(regexMatch);
-                publicScope += match.scopeContent;
+                if (match.scopeContent) {
+                    publicFragment.push(match.scopeContent);
+                }
             });
-        
 
-        return new io.TextFragment(publicScope);
+        return publicFragment;
     }
 
     static parseClassProtectedScope(data:io.TextFragment): io.TextFragment {
-        let protectedScope = "";
+        const protectedFragment = new io.TextFragment();
         data.removeMatching(ClassProtectedScopeMatch.REGEX_STR).forEach(
             (regexMatch) => {
-                let match = new ClassProtectedScopeMatch(regexMatch);
-                protectedScope += match.scopeContent;
+                let match = new ClassPublicScopeMatch(regexMatch);
+                if (match.scopeContent) {
+                    protectedFragment.push(match.scopeContent);
+                }
             });
 
-        return new io.TextFragment(protectedScope);
+        return protectedFragment;
     }
 
     static parseClassMemberFunctions(data: io.TextFragment, classNameGen:io.ClassNameGenerator): cpptypes.IFunction[] {

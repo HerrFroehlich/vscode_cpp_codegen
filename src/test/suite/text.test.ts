@@ -215,4 +215,33 @@ suite('Text Utility Tests', () => {
 
 		done();
 	});
+
+	test('TexRegexMatch return correct group matches', (done) => {
+		const testContent = "This is a test message";
+		const regex = "(test) (message)(too)?";
+		const textBlock = new io.TextBlock(testContent);
+
+		const [, matches] = textBlock.removeMatching(regex);
+	
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].fullMatch, "test message");
+		assert.strictEqual(matches[0].groupMatches[0], "test");
+		assert.strictEqual(matches[0].groupMatches[1], "message");
+		assert.strictEqual(matches[0].groupMatches[2], undefined);
+
+		for (let index = 0; index < 2; index++) {
+			const groupMatch = matches[0].getGroupMatchTextBlock(index);
+			assert(groupMatch);
+			const str = matches[0].groupMatches[index];
+			assert.strictEqual(groupMatch.content, str);
+			assert.strictEqual(groupMatch.scopeStart, testContent.indexOf(str));
+			assert.strictEqual(groupMatch.scopeEnd, testContent.indexOf(str)+str.length-1);
+		}
+		assert(!matches[0].getGroupMatchTextBlock(2));
+		assert.throws(() => {
+			matches[0].getGroupMatchTextBlock(3);
+		});
+
+		done();
+	});
 });
