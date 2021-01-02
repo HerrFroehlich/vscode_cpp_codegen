@@ -132,6 +132,20 @@ suite('Text Utility Tests', () => {
 		}
 
 		done();
+	});	
+	
+	test('Textblock remove all', (done) => {
+		const testContent = "This is a test message";
+		const regex = testContent;
+		const textBlock = new io.TextBlock(testContent);
+
+		const [slicedBlocks, matches] = textBlock.removeMatching(regex);
+		
+		assert.strictEqual(slicedBlocks.length,0);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].fullMatch, regex);
+
+		done();
 	});
 
 	test('Textblock removes single  regex non match', (done) => {
@@ -182,7 +196,7 @@ suite('Text Utility Tests', () => {
 		done();
 	});
 
-	test('Textfragment removes multiple regex match', (done) => {
+	test('TextFragment removes multiple regex match', (done) => {
 		let testContent = "";
 		const regex = "test";
 		const spaceStr = "[SPACE]";
@@ -199,7 +213,7 @@ suite('Text Utility Tests', () => {
 		done();
 	});
 
-	test('Textfragment removes multiple regex not match', (done) => {
+	test('TextFragment removes multiple regex not match', (done) => {
 		let testContent = "";
 		const regex = "test";
 		const spaceStr = "[SPACE]";
@@ -212,6 +226,29 @@ suite('Text Utility Tests', () => {
 		const matches = textFrag.removeNotMatching(regex);
 		assert.strictEqual(matches.length,iter);
 		assert.strictEqual(textFrag.blocks.length,iter);
+
+		done();
+	});
+	
+	test('TextFragment removes nested regex', (done) => {
+		const testContent = "a{{}}b";
+		const regex = "{}";
+
+		const textFrag = new io.TextFragment(testContent);
+
+		let matches = textFrag.removeMatching(regex);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].fullMatch, regex);
+		assert.strictEqual(matches[0].scopeStart, 2);
+		assert.strictEqual(matches[0].scopeEnd, 3);
+		assert.strictEqual(textFrag.blocks.length,2);
+
+		matches = textFrag.removeMatching(regex);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].fullMatch, regex);
+		assert.strictEqual(matches[0].scopeStart, 1);
+		assert.strictEqual(matches[0].scopeEnd, 4);
+		assert.strictEqual(textFrag.blocks.length,2);
 
 		done();
 	});

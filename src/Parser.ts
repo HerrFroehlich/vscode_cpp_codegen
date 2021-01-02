@@ -1,5 +1,6 @@
 import * as cpptypes from "./cpptypes";
 import * as io from "./io";
+import { TextBlock } from "./io";
 
 // TODO Error handling: do try catch in parser or move it to a higher level (prefered so we can catch errors in deserialze functions)?
 
@@ -83,15 +84,19 @@ class ClassMatch {
 
         this.nameMatch = regexMatch.groupMatches[0];
         this.inheritanceMatch = (regexMatch.groupMatches[1]) ? regexMatch.groupMatches[1].split(",") : [];
-        this.bodyMatch = (regexMatch.groupMatches[2]) ? regexMatch.groupMatches[2] : "";
-        this.isInterface = ClassMatch.pureVirtualMemberRegexMatcher.test(this.bodyMatch);
+        this.bodyMatch = regexMatch.getGroupMatchTextBlock(2);
+        if (this.bodyMatch) {
+            this.isInterface = ClassMatch.pureVirtualMemberRegexMatcher.test(this.bodyMatch.content);
+        } else {
+            this.isInterface = false;
+        }
     }
 
     private static readonly classSpecifierRegex: string = "class\\s";
     private static readonly classNameRegex: string = "([\\S]+)";
     private static readonly inheritanceRegex: string = "(?::\\s*([\\S\\s]+))?";
     private static readonly noNestedClassRegex: string = "(?!"+ClassMatch.classSpecifierRegex+"\\s*[\\S]+\\s*{)";
-    private static readonly classBodyRegex: string = "{((?:"+ClassMatch.noNestedClassRegex+"[\\s\\S])*)}";
+    private static readonly classBodyRegex: string = "{((?:"+ClassMatch.noNestedClassRegex+"[\\s\\S])*?)}";
     private static readonly classEndRegex: string = ";";
     private static readonly pureVirtualMemberRegexMatcher =  /virtual[\s\S]*?=[\s]*0[\s]*;/g;
     
@@ -102,7 +107,7 @@ class ClassMatch {
 
     readonly nameMatch:string;
     readonly inheritanceMatch: string[];
-    readonly bodyMatch: string;
+    readonly bodyMatch: TextBlock|undefined;
     readonly isInterface: boolean;
 }
 class ClassProtectedScopeMatch {
@@ -296,20 +301,42 @@ export abstract class Parser {
     
     static parseClasses(data:io.TextFragment):cpptypes.IClass[] {
         let classes: cpptypes.IClass[] = [];
-        
-        let generateNewClass = (regexMatch: io.TextRegexMatch) => {
-            let match = new ClassMatch(regexMatch);
-            let newClass = match.isInterface? new cpptypes.ClassInterface(match.nameMatch, match.inheritanceMatch) : new cpptypes.ClassImpl(match.nameMatch, match.inheritanceMatch);
-            let newData = new io.TextFragment(match.bodyMatch);
-            newClass.deserialize(newData);
-            return newClass;
-        };
 
-        data.removeMatching(ClassMatch.REGEX_STR).forEach(
-            (regexMatch) => {
-                classes.push(generateNewClass(regexMatch)); 
+        let matchesFound = true;
+        while (matchesFound) {
+            let newClasses: cpptypes.IClass[] = [];
+            matchesFound = false;
+            data.removeMatching(ClassMatch.REGEX_STR).forEach(
+                (regexMatch) => {           
+                    let match = new ClassMatch(regexMatch);
+                    let newClass = match.isInterface? new cpptypes.ClassInterface(regexMatch, match.nameMatch, match.inheritanceMatch) : new cpptypes.ClassImpl(regexMatch, match.nameMatch, match.inheritanceMatch);
+                    if (match.bodyMatch) {
+                        let newData = new io.TextFragment();
+                        newData.push(match.bodyMatch);
+                        newClass.deserialize(newData);
+                    }
+                    newClasses.push(newClass); 
+                    matchesFound = true;
+                }
+            );
+            
+            if (matchesFound) {
+                newClasses.forEach(
+                    (newClass) => {
+                        let isNested = false;
+                        for (let index = classes.length-1; index >= 0 ; index--) {
+                            const possibleNestedClass = classes[index];
+                            if (newClass.tryAddNestedClass(possibleNestedClass)) {
+                                classes.splice(index,1);
+                                break;
+                            }
+                        }
+                        classes.push(newClass);
+                    }
+                );
             }
-        );
+        }
+
         
         return classes;
     }

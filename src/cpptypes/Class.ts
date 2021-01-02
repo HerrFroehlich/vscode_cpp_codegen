@@ -1,17 +1,26 @@
 import { IClass, IFunction, SerializableMode } from "./TypeInterfaces";
 import {Parser} from "../Parser";
-import { ClassNameGenerator, TextFragment } from "../io";
+import { ClassNameGenerator, TextFragment, TextScope } from "../io";
 
-class ClassBase implements IClass {
-    constructor(    
+class ClassBase  extends TextScope implements IClass {
+    constructor(
+        scope:TextScope,
         public readonly name:string,
         public readonly inheritance:string[]) {
-        
+        super(scope.scopeStart, scope.scopeEnd)
+;    }
+
+    tryAddNestedClass(possibleNestedClass: IClass) {
+        if (this.fullyContains(possibleNestedClass)) {
+            this.nestedClasses.push(possibleNestedClass);
+            return true;
+        }
+        return false;
     }
 
     deserialize (data: TextFragment) {
         
-        this.nestedClasses = this.nestedClasses.concat(Parser.parseClasses(data));
+        this.nestedClasses = [];
 
         const privateContent:TextFragment = Parser.parseClassPrivateScope(data);
         this.privateFunctions = Parser.parseClassMemberFunctions(privateContent, this.classNameGen);

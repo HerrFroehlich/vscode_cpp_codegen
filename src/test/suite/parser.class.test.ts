@@ -187,14 +187,14 @@ suite('Parser GeneralClasses Tests', () => {
 		let classes:IClass[] = Parser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,2);
-		assert.strictEqual(classes[0].name,"MyClass");
-		assert.strictEqual(classes[0].publicFunctions.length,0);
-		assert.strictEqual(classes[0].privateFunctions.length,0);
-		assert.strictEqual(classes[0].protectedFunctions.length,0);
-		assert.strictEqual(classes[0].inheritance.length,0);
-		assert.strictEqual(classes[0].nestedClasses.length,1);
+		assert.strictEqual(classes[1].name,"MyClass");
+		assert.strictEqual(classes[1].publicFunctions.length,0);
+		assert.strictEqual(classes[1].privateFunctions.length,0);
+		assert.strictEqual(classes[1].protectedFunctions.length,0);
+		assert.strictEqual(classes[1].inheritance.length,0);
+		assert.strictEqual(classes[1].nestedClasses.length,1);
 
-		let nestedClass:IClass = classes[0].nestedClasses[0];
+		let nestedClass:IClass = classes[1].nestedClasses[0];
 		assert.strictEqual(nestedClass.name,"NestedClass");
 		assert.strictEqual(nestedClass.publicFunctions.length,0);
 		assert.strictEqual(nestedClass.privateFunctions.length,0);
@@ -202,12 +202,12 @@ suite('Parser GeneralClasses Tests', () => {
 		assert.strictEqual(nestedClass.inheritance.length,0);
 		assert.strictEqual(nestedClass.nestedClasses.length,0);
 
-		assert.strictEqual(classes[1].name,"MyClass2");
-		assert.strictEqual(classes[1].publicFunctions.length,0);
-		assert.strictEqual(classes[1].privateFunctions.length,0);
-		assert.strictEqual(classes[1].protectedFunctions.length,0);
-		assert.strictEqual(classes[1].inheritance.length,0);
-		assert.strictEqual(classes[1].nestedClasses.length,0);
+		assert.strictEqual(classes[0].name,"MyClass2");
+		assert.strictEqual(classes[0].publicFunctions.length,0);
+		assert.strictEqual(classes[0].privateFunctions.length,0);
+		assert.strictEqual(classes[0].protectedFunctions.length,0);
+		assert.strictEqual(classes[0].inheritance.length,0);
+		assert.strictEqual(classes[0].nestedClasses.length,0);
 
 		done();
 	});
