@@ -161,31 +161,21 @@ export class TextBlock extends TextScope {
         return regexMatches;
      }
 
-    removeMatching (regex:string):[TextBlock[], TextRegexMatch[]] {
+    match (regex:string):TextRegexMatch[] {
         const regexMatches:TextRegexMatch[] = this.matchContent(regex); 
-        return [this.splice(regexMatches), regexMatches];
+        return regexMatches;
     }
 
-    removeNotMatching (regex:string):[TextBlock[], TextRegexMatch[]] {
+    inverseMatch (regex:string):TextRegexMatch[] {
         const regexMatches:TextRegexMatch[] = this.matchContent(regex); 
         const inverseRegexMatches:TextRegexMatch[] = [];
-        const remainingBlocks:TextBlock[] = [];
         this.splice(regexMatches).forEach(
             (splicedBlock) => {
                 inverseRegexMatches.push(TextRegexMatch.fromTextBlock(splicedBlock));
             }
         );
 
-        regexMatches.forEach(
-            (match) => {
-                remainingBlocks.push(new TextBlock(match.fullMatch, match.scopeStart));
-            }
-        );
-        if (!remainingBlocks.length) {
-            remainingBlocks.push(this);
-        }
-
-        return [remainingBlocks, inverseRegexMatches];
+        return inverseRegexMatches;
     }
 
     clone():TextBlock{
@@ -249,7 +239,7 @@ export class TextFragment {
                 mergedContent += block.content;
         });
         const mergedBlock = new TextBlock(mergedContent); 
-        const [, regexMatches] = inverse ? mergedBlock.removeNotMatching(regex) : mergedBlock.removeMatching(regex);
+        const regexMatches = inverse ? mergedBlock.inverseMatch(regex) : mergedBlock.match(regex);
 
         for (let index = regexMatches.length-1; index >= 0; index--) {
             const match = regexMatches[index];

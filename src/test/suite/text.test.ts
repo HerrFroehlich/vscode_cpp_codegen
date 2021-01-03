@@ -89,7 +89,8 @@ suite('Text Utility Tests', () => {
 		const regex = "test";
 		const textBlock = new io.TextBlock(testContent);
 
-		const [slicedBlocks, matches] = textBlock.removeMatching(regex);
+		const matches = textBlock.match(regex);
+		const slicedBlocks = textBlock.splice(matches);
 		
 		assert.strictEqual(slicedBlocks.length,2);
 		assert.strictEqual(slicedBlocks[0].content, "This is a ");
@@ -115,7 +116,9 @@ suite('Text Utility Tests', () => {
 		}
 		const textBlock = new io.TextBlock(testContent);
 
-		const [slicedBlocks, matches] = textBlock.removeMatching(regex);
+		
+		const matches = textBlock.match(regex);
+		const slicedBlocks = textBlock.splice(matches);
 		
 		assert.strictEqual(slicedBlocks.length,iter);
 		assert.strictEqual(matches.length,iter);
@@ -139,7 +142,9 @@ suite('Text Utility Tests', () => {
 		const regex = testContent;
 		const textBlock = new io.TextBlock(testContent);
 
-		const [slicedBlocks, matches] = textBlock.removeMatching(regex);
+		
+		const matches = textBlock.match(regex);
+		const slicedBlocks = textBlock.splice(matches);
 		
 		assert.strictEqual(slicedBlocks.length,0);
 		assert.strictEqual(matches.length,1);
@@ -153,7 +158,8 @@ suite('Text Utility Tests', () => {
 		const regex = "test";
 		const textBlock = new io.TextBlock(testContent);
 
-		const [slicedBlocks, matches] = textBlock.removeNotMatching(regex);
+		const matches = textBlock.inverseMatch(regex);
+		const slicedBlocks = textBlock.splice(matches);
 		
 		assert.strictEqual(slicedBlocks.length,1);
 		assert.strictEqual(slicedBlocks[0].content, "test");
@@ -177,7 +183,8 @@ suite('Text Utility Tests', () => {
 		}
 		const textBlock = new io.TextBlock(testContent);
 
-		const [slicedBlocks, matches] = textBlock.removeNotMatching(regex);
+		const matches = textBlock.inverseMatch(regex);
+		const slicedBlocks = textBlock.splice(matches);
 		
 		assert.strictEqual(slicedBlocks.length,iter);
 		assert.strictEqual(matches.length,iter);
@@ -258,7 +265,7 @@ suite('Text Utility Tests', () => {
 		const regex = "(test) (message)(too)?";
 		const textBlock = new io.TextBlock(testContent);
 
-		const [, matches] = textBlock.removeMatching(regex);
+		const matches = textBlock.match(regex);
 	
 		assert.strictEqual(matches.length,1);
 		assert.strictEqual(matches[0].fullMatch, "test message");
