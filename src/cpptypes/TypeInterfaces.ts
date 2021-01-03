@@ -20,7 +20,8 @@ export interface IClass extends ISerializable,IDeserializable,TextScope {
     //TODO constructor destructor, data members? (at least public/protected ones)
 }
 
-export interface INamespace extends ISerializable,IDeserializable {
+export interface INamespace extends ISerializable,IDeserializable,TextScope {
+    tryAddNestedNamespace(possibleNestedClass: INamespace):boolean;
     readonly name:string;
     readonly classes:IClass[]; 
     readonly functions:IFunction[];

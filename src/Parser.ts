@@ -27,23 +27,20 @@ class NamespaceMatch {
 
         this.nameMatch = regexMatch.groupMatches[0];
 
-        this.contentMatch = (regexMatch.groupMatches[1]) ? regexMatch.groupMatches[1] : "";
+        this.bodyMatch = regexMatch.getGroupMatchTextBlock(1);
     }
 
     private static readonly namespaceSpecifierRegex: string = "namespace\\s";
     private static readonly namespaceNameRegex: string = "([\\S]+)";
-    private static readonly namespaceBodyRegex: string = "{([\\s\\S]*)}";
-    private static readonly nextNamespaceRegex: string = "(?=namespace)";
+    private static readonly noNestedNamespaceRegex: string = "(?!"+NamespaceMatch.namespaceSpecifierRegex+"\\s*[\\S]+\\s*{)";
+    private static readonly namespaceBodyRegex: string = "{((?:"+NamespaceMatch.noNestedNamespaceRegex+"[\\s\\S])*?)}(?![\\s]*;)";
     
-    static readonly SINGLE_REGEX_STR: string = joinStringsWithWhiteSpace(
+    static readonly REGEX_STR: string = joinStringsWithWhiteSpace(
         [NamespaceMatch.namespaceSpecifierRegex, NamespaceMatch.namespaceNameRegex, NamespaceMatch.namespaceBodyRegex]);
-    static readonly MULTI_REGEX_STR: string = joinStringsWithFiller(
-        [NamespaceMatch.SINGLE_REGEX_STR, NamespaceMatch.nextNamespaceRegex], "[\\s\\S]*?");
     static readonly NOF_GROUPMATCHES = 2;
 
-    static readonly REGEX_STR:string = 'namespace (\\S*)\\s*{([\\s\\S]*namespace \\S*\\s*{[\\s\\S]*})*((?:(?!namespace)[\\s\\S])*)}';
     readonly nameMatch:string;
-    readonly contentMatch:string;
+    readonly bodyMatch:io.TextBlock|undefined;
 }
 
 class StandaloneFunctionMatch {
@@ -262,24 +259,38 @@ export abstract class Parser {
     static parseNamespaces(data:io.TextFragment): cpptypes.INamespace[]  {
         let namespaces:cpptypes.INamespace[] = [];
 
-        let generateNewNamespace = (regexMatch: io.TextRegexMatch) => {
-            let match = new NamespaceMatch(regexMatch);
-            let newNamespace = new cpptypes.Namespace(match.nameMatch);
-            let newData = new io.TextFragment(match.contentMatch);
-            newNamespace.deserialize(newData);
-            return newNamespace;
-        };
-
-        data.removeMatching(NamespaceMatch.MULTI_REGEX_STR).forEach(
-            (regexMatch) => {
-                namespaces.push(generateNewNamespace(regexMatch));
+        let matchesFound = true;
+        while (matchesFound) {
+            let newNamespaces: cpptypes.INamespace[] = [];
+            matchesFound = false;
+            data.removeMatching(NamespaceMatch.REGEX_STR).forEach(
+                (regexMatch) => {           
+                    let match = new NamespaceMatch(regexMatch);
+                    let newNamespace = new cpptypes.Namespace(match.nameMatch, regexMatch);
+                    if (match.bodyMatch) {
+                        let newData = new io.TextFragment();
+                        newData.push(match.bodyMatch);
+                        newNamespace.deserialize(newData);
+                    }
+                    newNamespaces.push(newNamespace); 
+                    matchesFound = true;
+                }
+            );
+            
+            if (matchesFound) {
+                newNamespaces.forEach(
+                    (newNamespace) => {
+                        for (let index = namespaces.length-1; index >= 0 ; index--) {
+                            const possibleNestedNamespace = namespaces[index];
+                            if (newNamespace.tryAddNestedNamespace(possibleNestedNamespace)) {
+                                namespaces.splice(index,1);
+                            }
+                        }
+                        namespaces.push(newNamespace);
+                    }
+                );
             }
-        );
-        data.removeMatching(NamespaceMatch.SINGLE_REGEX_STR).forEach(
-            (regexMatch) => {
-                namespaces.push(generateNewNamespace(regexMatch));
-            }
-        );
+        }
 
         return namespaces;
     }
@@ -323,12 +334,10 @@ export abstract class Parser {
             if (matchesFound) {
                 newClasses.forEach(
                     (newClass) => {
-                        let isNested = false;
                         for (let index = classes.length-1; index >= 0 ; index--) {
                             const possibleNestedClass = classes[index];
                             if (newClass.tryAddNestedClass(possibleNestedClass)) {
                                 classes.splice(index,1);
-                                break;
                             }
                         }
                         classes.push(newClass);
@@ -337,7 +346,6 @@ export abstract class Parser {
             }
         }
 
-        
         return classes;
     }
 }
