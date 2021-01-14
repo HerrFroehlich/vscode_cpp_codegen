@@ -8,7 +8,7 @@ import * as io from './io';
 export function activate(context: vscode.ExtensionContext) {
 
 	console.log('Activating code-gen.cpp!'); // TODO logger!
-
+	
 	let disposable = vscode.commands.registerTextEditorCommand('codegen-cpp.cppSourceFromHeader', (textEditor, edit) => {
 		let file:io.TextFile;
         try {
