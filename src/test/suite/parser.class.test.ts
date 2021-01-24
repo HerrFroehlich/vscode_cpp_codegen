@@ -154,38 +154,55 @@ suite('Parser GeneralClasses Tests', () => {
 	});
 
 	//TODO private public protected
-	test('ParseNestedClassesWithoutMemberFunctions', (done) => {
-		const testContent = TextFragment.createFromString(
-		`class MyClass {       // The class
-			int myNum;        // Attribute (int variable)
-			string myString;  // Attribute (string variable)		
-			class NestedClass {       // The class
+	const scopeData = ["", "private:", "protected:", "public:"];
+	describe('ParseNestedClassesWithoutMemberFunctions', function () {
+		callItAsync("With scope ${value}", scopeData, function (done: Done, scope: string) {
+			const testContent = TextFragment.createFromString(
+				`class MyClass {       // The class
 				int myNum;        // Attribute (int variable)
 				string myString;  // Attribute (string variable)
-		  	};
-		  };
-		`
-		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+				${scope}\n
+				class NestedClass {       // The class
+					int myNum;        // Attribute (int variable)
+					string myString;  // Attribute (string variable)
+				};
+			};
+			`
+			);
+			let classes: IClass[] = Parser.parseClasses(testContent);
 
-		assert.strictEqual(classes.length,1);
-		assert.strictEqual(classes[0].name,"MyClass");
-		assert.strictEqual(classes[0].publicScope.memberFunctions.length,0);
-		assert.strictEqual(classes[0].privateScope.memberFunctions.length,0);
-		assert.strictEqual(classes[0].protectedScope.memberFunctions.length,0);
-		assert.strictEqual(classes[0].inheritance.length,0);
+			assert.strictEqual(classes.length, 1);
+			assert.strictEqual(classes[0].name, "MyClass");
+			assert.strictEqual(classes[0].publicScope.memberFunctions.length, 0);
+			assert.strictEqual(classes[0].privateScope.memberFunctions.length, 0);
+			assert.strictEqual(classes[0].protectedScope.memberFunctions.length, 0);
+			assert.strictEqual(classes[0].inheritance.length, 0);
 
-		let nestedClass: IClass = classes[0].privateScope.nestedClasses[0];
-		assert.strictEqual(classes[0].privateScope.nestedClasses.length,1);
-		
-		assertClassScopeEmpty(nestedClass.publicScope);
-		assertClassScopeEmpty(nestedClass.privateScope);
-		assertClassScopeEmpty(nestedClass.protectedScope);
-		assert.strictEqual(nestedClass.destructor,undefined);
-		assert.strictEqual(nestedClass.inheritance.length,0);
+			let nestedClass: IClass;
+			switch (scope) {
+				case scopeData[2]:
+					assert.strictEqual(classes[0].protectedScope.nestedClasses.length, 1);
+					nestedClass = classes[0].protectedScope.nestedClasses[0];
+					break;
+				case scopeData[3]:
+					assert.strictEqual(classes[0].publicScope.nestedClasses.length, 1);
+					nestedClass = classes[0].publicScope.nestedClasses[0];
+					break;
+				default:
+					assert.strictEqual(classes[0].privateScope.nestedClasses.length, 1);
+					nestedClass = classes[0].privateScope.nestedClasses[0];
+					break;
+			}
+			
+			assertClassScopeEmpty(nestedClass.publicScope);
+			assertClassScopeEmpty(nestedClass.privateScope);
+			assertClassScopeEmpty(nestedClass.protectedScope);
+			assert.strictEqual(nestedClass.destructor, undefined);
+			assert.strictEqual(nestedClass.inheritance.length, 0);
 
-		done();
-	});	
+			done();
+		});
+	});
 	
 	
 	test('ParseNestedAndMultipleClassesWithoutMemberFunctions', (done) => {

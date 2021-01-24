@@ -157,7 +157,3 @@ export class PureVirtualMemberFunction  extends MemberFunction{
     }
 
 }
-
-
-
-//TODO STATIC

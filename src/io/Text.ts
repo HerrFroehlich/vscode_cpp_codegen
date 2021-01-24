@@ -81,6 +81,7 @@ export class TextRegexMatch extends TextScope {
         this.groupMatches = matches.slice(1);
     }
     
+    //TODO this calculates the scope wrong if there had been 'gaps' before => pass the index helper
     getGroupMatchTextBlock(index:number): TextBlock|undefined {
         error(index < this.groupMatches.length, "Group match index out of bounds ");
         const groupMatch = this.groupMatches[index];

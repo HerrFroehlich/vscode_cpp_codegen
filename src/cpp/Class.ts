@@ -267,3 +267,5 @@ export class ClassInterface extends ClassBase {
         return serial;
     }
 } 
+
+//TODO structs

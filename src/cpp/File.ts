@@ -22,8 +22,6 @@ class FileBase {
         });
         fileHeader += "\n";
 
-        // TODO make file header customizable (e.g licence)
-
         return fileHeader; 
     }
 
