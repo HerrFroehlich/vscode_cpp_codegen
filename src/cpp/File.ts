@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { INamespace, SerializableMode } from "./TypeInterfaces";
-import {Parser} from "../Parser";
+import {HeaderParser} from "../HeaderParser";
 import * as io from '../io';
 class FileBase {
     protected constructor(filePath:string) {
@@ -44,9 +44,9 @@ export class HeaderFile extends FileBase implements io.IFile
 
     deserialize (fileContent: io.TextFragment)
     {
-        Parser.parseComments(fileContent);
-        this._namespaces.push(...Parser.parseNamespaces(fileContent, this._nameInputProvider));
-        this._namespaces.push(...Parser.parseNoneNamespaces(fileContent, this._nameInputProvider));
+        HeaderParser.parseComments(fileContent);
+        this._namespaces.push(...HeaderParser.parseNamespaces(fileContent, this._nameInputProvider));
+        this._namespaces.push(...HeaderParser.parseNoneNamespaces(fileContent, this._nameInputProvider));
     }
 
     serialize (mode: SerializableMode)

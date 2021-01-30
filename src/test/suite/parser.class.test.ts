@@ -5,7 +5,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Done, describe} from 'mocha';
 // import * as myExtension from '../../extension';
-import {Parser} from '../../Parser';
+import {HeaderParser} from '../../HeaderParser';
 import {IClass, ClassInterface, ClassImpl, IClassScope} from '../../cpp';
 import { callItAsync } from "./utils";
 
@@ -64,7 +64,7 @@ suite('Parser GeneralClasses Tests', () => {
 		  };
 		`
 		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,1);
 		assert.strictEqual(classes[0].name, "MyClass");
@@ -84,7 +84,7 @@ suite('Parser GeneralClasses Tests', () => {
 		  };
 		`
 		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,1);
 		assert.strictEqual(classes[0].name,"MyClass");
@@ -108,7 +108,7 @@ suite('Parser GeneralClasses Tests', () => {
 		  };
 		`
 		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,1);
 		assert.strictEqual(classes[0].name,"MyClass");
@@ -138,7 +138,7 @@ suite('Parser GeneralClasses Tests', () => {
 		};
 		`
 		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,3);
 		for (let index = 1; index < 4; index++) {
@@ -166,7 +166,7 @@ suite('Parser GeneralClasses Tests', () => {
 		  };
 		`
 		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,1);
 		assert.strictEqual(classes[0].name,"MyClass");
@@ -205,7 +205,7 @@ suite('Parser GeneralClasses Tests', () => {
 		  };
 		`
 		);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,2);
 		assert.strictEqual(classes[1].name,"MyClass");
@@ -239,7 +239,7 @@ suite('Parser GeneralClasses Tests', () => {
 				${functionTestData.content}
 			};
 			`);
-			let classes:IClass[] = Parser.parseClasses(testContent);
+			let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 			assert.strictEqual(classes.length,1);
 			assert.strictEqual(classes[0].name,"MyClass");
@@ -260,7 +260,7 @@ suite('Parser GeneralClasses Tests', () => {
 				${functionTestData.content}
 			};
 			`);
-			let classes:IClass[] = Parser.parseClasses(testContent);
+			let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 			assert.strictEqual(classes.length,1);
 			assert.strictEqual(classes[0].name,"MyClass");
@@ -281,7 +281,7 @@ suite('Parser GeneralClasses Tests', () => {
 				${functionTestData.content}
 			};
 			`);
-			let classes:IClass[] = Parser.parseClasses(testContent);
+			let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 			assert.strictEqual(classes.length,1);
 			assert.strictEqual(classes[0].name,"MyClass");
@@ -302,7 +302,7 @@ suite('Parser GeneralClasses Tests', () => {
 				${functionTestData.content}
 			};
 			`); 
-			let classes:IClass[] = Parser.parseClasses(testContent);
+			let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 			assert.strictEqual(classes.length,1);
 			assert.strictEqual(classes[0].name,"MyClass");
@@ -333,7 +333,7 @@ suite('Parser GeneralClasses Tests', () => {
 				${functionTestData.content}
 			};
 			`);
-			let classes:IClass[] = Parser.parseClasses(testContent);
+			let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 			assert.strictEqual(classes.length,1);
 			assert.strictEqual(classes[0].name,"MyClass");
@@ -360,7 +360,7 @@ suite('Parser GeneralClasses Tests', () => {
 				${functionTestData.content}
 			};
 			`);
-			let classes:IClass[] = Parser.parseClasses(testContent);
+			let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 			assert.strictEqual(classes.length,1);
 			assert.strictEqual(classes[0].name,"MyClass");
@@ -380,7 +380,7 @@ suite('Parser GeneralClasses Tests', () => {
 			~MyClass ();
 		};
 		`);
-		let classes: IClass[] = Parser.parseClasses(testContent);
+		let classes: IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length, 1);
 		assert.strictEqual(classes[0].name, "MyClass");
@@ -401,7 +401,7 @@ suite('Parser GeneralClasses Tests', () => {
 			virtual ~MyClass ();
 		};
 		`);
-		let classes:IClass[] = Parser.parseClasses(testContent);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
 
 		assert.strictEqual(classes.length,1);
 		assert.strictEqual(classes[0].name,"MyClass");

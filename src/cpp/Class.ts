@@ -1,5 +1,5 @@
 import { IClass, IFunction, IConstructor, IDestructor, IClassScope, SerializableMode } from "./TypeInterfaces";
-import {Parser} from "../Parser";
+import {HeaderParser} from "../HeaderParser";
 import { ClassNameGenerator } from "./ClassNameGenerator";
 import * as io from "../io";
 
@@ -72,19 +72,19 @@ class ClassScope implements IClassScope {
         let content: io.TextFragment;
         switch (this.type) {
             case ClassScopeType.protected:
-                content = Parser.parseClassProtectedScope(data);
+                content = HeaderParser.parseClassProtectedScope(data);
                 break;
             case ClassScopeType.public:
-                content = Parser.parseClassPublicScope(data);
+                content = HeaderParser.parseClassPublicScope(data);
                 break;
             case ClassScopeType.private:
             default:
-                content = Parser.parseClassPrivateScope(data);
+                content = HeaderParser.parseClassPrivateScope(data);
                 break;
         }
         this.scopes.push(...content.blocks);
-        this.constructors.push(...Parser.parseClassConstructor(content, this._className, this._classNameGen));
-        this.memberFunctions.push(...Parser.parseClassMemberFunctions(content, this._classNameGen));
+        this.constructors.push(...HeaderParser.parseClassConstructor(content, this._className, this._classNameGen));
+        this.memberFunctions.push(...HeaderParser.parseClassMemberFunctions(content, this._classNameGen));
     }
 
     async serialize(mode: SerializableMode) {   
@@ -166,7 +166,7 @@ class ClassBase  extends io.TextScope implements IClass {
     }
 
     deserialize (data: io.TextFragment) {
-        const dtors = Parser.parseClassDestructors(data, this.name, this._classNameGen);
+        const dtors = HeaderParser.parseClassDestructors(data, this.name, this._classNameGen);
         if (dtors.length > 1) {
             throw new Error("Class " + this.name + " has multiple deconstructors!");
         } else if (dtors.length === 1) {

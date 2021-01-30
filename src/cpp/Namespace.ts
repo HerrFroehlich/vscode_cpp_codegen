@@ -1,5 +1,5 @@
 import { IClass, IFunction, INamespace, SerializableMode} from "./TypeInterfaces";
-import { Parser } from "../Parser";
+import { HeaderParser } from "../HeaderParser";
 import * as io from "../io";
 export class Namespace  extends io.TextScope implements INamespace {
     
@@ -30,8 +30,8 @@ export class Namespace  extends io.TextScope implements INamespace {
     }
 
     deserialize (data: io.TextFragment) {
-        this.classes = Parser.parseClasses(data, this._nameInputProvider);
-        this.functions = Parser.parseStandaloneFunctiones(data);
+        this.classes = HeaderParser.parseClasses(data, this._nameInputProvider);
+        this.functions = HeaderParser.parseStandaloneFunctiones(data);
     }
 
     name:string;
@@ -63,8 +63,8 @@ export class NoneNamespace extends io.TextScope implements INamespace {
     }
 
     deserialize (data: io.TextFragment) {
-        this.classes = Parser.parseClasses(data, this._nameInputProvider);
-        this.functions = Parser.parseStandaloneFunctiones(data);
+        this.classes = HeaderParser.parseClasses(data, this._nameInputProvider);
+        this.functions = HeaderParser.parseStandaloneFunctiones(data);
     }
 
     readonly name:string;

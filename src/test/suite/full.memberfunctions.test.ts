@@ -7,7 +7,7 @@ import { Done, describe, it, test } from 'mocha';
 import * as vscode from 'vscode';
 import { callItAsync } from "./utils";
 
-import {Parser} from '../../Parser';
+import {HeaderParser} from '../../HeaderParser';
 import {ClassNameGenerator, MemberFunction, SerializableMode} from '../../cpp';
 import {TextFragment } from '../../io';
 
@@ -22,7 +22,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -49,7 +49,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -77,7 +77,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -105,7 +105,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -133,7 +133,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -162,7 +162,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -191,7 +191,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -218,7 +218,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "ITestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, true);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -245,7 +245,7 @@ suite('Full Member Function Tests', () => {
 				const testClassName = "ITestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, true);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -271,7 +271,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 1);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -304,7 +304,7 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "ITestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, true);
 
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 5);
 
 		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;	
@@ -375,8 +375,8 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		Parser.parseComments(testContent);
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		HeaderParser.parseComments(testContent);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 0);
 
 		done();
@@ -388,8 +388,8 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		Parser.parseComments(testContent);
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		HeaderParser.parseComments(testContent);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 0);
 
 		done();
@@ -404,8 +404,8 @@ suite('Full Member Function Tests', () => {
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
 
-		Parser.parseComments(testContent);
-		let parsedFunctions = Parser.parseClassMemberFunctions(testContent, classNameGen);
+		HeaderParser.parseComments(testContent);
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
 		assert.strictEqual(parsedFunctions.length, 2);
 
 		done();

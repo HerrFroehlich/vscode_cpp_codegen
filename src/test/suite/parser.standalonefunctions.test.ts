@@ -4,7 +4,7 @@ import * as assert from 'assert';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 // import * as myExtension from '../../extension';
-import {Parser} from '../../Parser';
+import {HeaderParser} from '../../HeaderParser';
 import {IFunction} from '../../cpp';
 import { TextFragment } from '../../io';
 
@@ -17,7 +17,7 @@ suite('Parser Standalone Functions Tests', () => {
 void fncName (int argument);
 		`
 		);
-		let functions:IFunction[] = Parser.parseStandaloneFunctiones(testContent);
+		let functions:IFunction[] = HeaderParser.parseStandaloneFunctiones(testContent);
 
 		assert.strictEqual(functions.length,1);
 		assert.strictEqual(functions[0].name,"fncName");
@@ -33,7 +33,7 @@ void fncName (int argument,
 	std::shared_ptr<XYZ> argument2);
 		`
 		);
-		let functions:IFunction[] = Parser.parseStandaloneFunctiones(testContent);
+		let functions:IFunction[] = HeaderParser.parseStandaloneFunctiones(testContent);
 
 		assert.strictEqual(functions.length,1);
 		assert.strictEqual(functions[0].name,"fncName");
@@ -50,7 +50,7 @@ std::shared_ptr<XYZ> fncName2 (int args2,
 	void* arg3);
 		`
 		);
-		let functions:IFunction[] = Parser.parseStandaloneFunctiones(testContent);
+		let functions:IFunction[] = HeaderParser.parseStandaloneFunctiones(testContent);
 
 		assert.strictEqual(functions.length,2);
 		assert.strictEqual(functions[0].name,"fncName");
@@ -69,7 +69,7 @@ const XYZ* fncName (int arg1,
 	void* arg2);
 		`
 		);
-		let functions:IFunction[] = Parser.parseStandaloneFunctiones(testContent);
+		let functions:IFunction[] = HeaderParser.parseStandaloneFunctiones(testContent);
 
 		assert.strictEqual(functions.length,1);
 		assert.strictEqual(functions[0].name,"fncName");

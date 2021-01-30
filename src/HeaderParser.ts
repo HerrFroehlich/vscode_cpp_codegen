@@ -229,7 +229,7 @@ class MemberFunctionMatch {
     readonly pureMatch:boolean;
 }
 
-export abstract class Parser {
+export abstract class HeaderParser {
 
     static parseClassPrivateScope(data:io.TextFragment): io.TextFragment {
         let publicOrPrivateRegex= "(?:public:|protected:)((?!private:)[\\s\\S])*";

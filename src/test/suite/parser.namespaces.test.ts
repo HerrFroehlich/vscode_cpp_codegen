@@ -2,7 +2,7 @@ import * as assert from 'assert';
 
 import { Done, describe} from 'mocha';
 // import * as myExtension from '../../extension';
-import {Parser} from '../../Parser';
+import {HeaderParser} from '../../HeaderParser';
 import {INamespace, Namespace} from '../../cpp';
 import {TextFragment} from '../../io';
 import { callItAsync } from "./utils";
@@ -42,7 +42,7 @@ suite('Parser Namespace Tests', () => {
 				}
 			`
 			);
-			let namespaces:INamespace[] = Parser.parseNamespaces(testData);
+			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
 
 			assert.strictEqual(namespaces.length,1);
 			assert.strictEqual(namespaces[0].name,"namespaceName");
@@ -65,7 +65,7 @@ suite('Parser Namespace Tests', () => {
 				}
 			`
 			);
-			let namespaces:INamespace[] = Parser.parseNamespaces(testData);
+			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
 
 			assert.strictEqual(namespaces.length,2);
 			assert.strictEqual(namespaces[0].name,"namespaceName");
@@ -95,7 +95,7 @@ suite('Parser Namespace Tests', () => {
 				}
 				}
 			`);
-			let namespaces:INamespace[] = Parser.parseNamespaces(testData);
+			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
 
 			assert.strictEqual(namespaces.length,1);
 			assert.strictEqual(namespaces[0].name,"namespaceName");
@@ -134,7 +134,7 @@ suite('Parser Namespace Tests', () => {
 				}
 				}
 			`);
-			let namespaces:INamespace[] = Parser.parseNamespaces(testData);
+			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
 
 			assert.strictEqual(namespaces.length,1);
 			assert.strictEqual(namespaces[0].name,"namespaceName");
@@ -167,7 +167,7 @@ suite('Parser Namespace Tests', () => {
 				}
 			`
 			);
-			let namespaces:INamespace[] = Parser.parseNamespaces(testData);
+			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
 
 			assert.strictEqual(namespaces.length, 1);
 			assert.strictEqual(namespaces[0].name, "namespaceName::namespaceName2");
