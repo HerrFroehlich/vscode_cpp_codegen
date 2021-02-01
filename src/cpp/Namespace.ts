@@ -1,4 +1,4 @@
-import { IClass, IFunction, INamespace, SerializableMode} from "./TypeInterfaces";
+import { IClass, IFunction, INamespace} from "./TypeInterfaces";
 import { HeaderParser } from "../HeaderParser";
 import * as io from "../io";
 export class Namespace  extends io.TextScope implements INamespace {
@@ -21,7 +21,7 @@ export class Namespace  extends io.TextScope implements INamespace {
         return false;
     }
 
-    async serialize (mode:SerializableMode) {
+    async serialize (mode:io.SerializableMode) {
         let serial = "namespace " +  this.name + " {\n\n"; 
         serial += await io.serializeArray(this.functions, mode);
         serial += await io.serializeArray(this.classes, mode);
@@ -56,7 +56,7 @@ export class NoneNamespace extends io.TextScope implements INamespace {
         return false;
     }
 
-    async serialize (mode:SerializableMode) {
+    async serialize (mode:io.SerializableMode) {
         let serial:string = await io.serializeArray(this.functions, mode);
         serial += await io.serializeArray(this.classes, mode);
         return serial;

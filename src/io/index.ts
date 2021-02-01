@@ -3,3 +3,4 @@ export * from './Text';
 export * from './FileHandler';
 export * from './WorkspaceDirectories';
 export * from './Configuration';
+export * from './ISignaturable';

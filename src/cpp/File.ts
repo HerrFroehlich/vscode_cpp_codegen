@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { INamespace, SerializableMode } from "./TypeInterfaces";
+import { INamespace} from "./TypeInterfaces";
 import {HeaderParser} from "../HeaderParser";
 import * as io from '../io';
 class FileBase {
@@ -49,7 +49,7 @@ export class HeaderFile extends FileBase implements io.IFile
         this._namespaces.push(...HeaderParser.parseNoneNamespaces(fileContent, this._nameInputProvider));
     }
 
-    serialize (mode: SerializableMode)
+    serialize (mode: io.SerializableMode)
     {
         return io.serializeArray(this._namespaces, mode);
     }
@@ -79,7 +79,7 @@ export class SourceFile extends FileBase implements io.IFile
         //TODO
     }
 
-    serialize (mode: SerializableMode)
+    serialize (mode: io.SerializableMode)
     {
         return io.serializeArray(this._namespaces, mode);
     }

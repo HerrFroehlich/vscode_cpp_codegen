@@ -1,19 +1,56 @@
-import { IFunction,  SerializableMode} from "./TypeInterfaces";
+import { IFunction} from "./TypeInterfaces";
 import { ClassNameGenerator } from "./ClassNameGenerator";
+import * as io from "../io";
 
-export class MemberFunction implements IFunction {
+class MemberFunctionSignature implements io.ISignaturable {
+    constructor(className:string, memberFunction: MemberFunction) {
+        this.textScope = memberFunction as io.TextScope;
+        this.signature = className + "::" + memberFunction.name + "(" + memberFunction.args.replace(/\s/g,'')
+        + ")" + (memberFunction.isConst? "const" : "");
+        this.serializable = memberFunction as io.ISerializable;
+    }
+    textScope: io.TextScope;
+    signature: string;
+    namespaces: string[] = [];
+
+    serializable: io.ISerializable;
+    compare(other: io.ISignaturable, availableNamespaces: string[] = []): boolean {
+        // TODO function arg signature
+        if (this.signature !== other.signature) {
+            return false;
+        } else {
+            const namespaceDiff = this.namespaces
+            .filter(ns => !other.namespaces.includes(ns))
+            .concat(other.namespaces.filter(ns => !this.namespaces.includes(ns)));
+            if (!namespaceDiff.length) {
+                return true;
+            }
+            
+            return namespaceDiff.every((ns => availableNamespaces.includes(ns)));
+        }
+    }
+}
+
+export class MemberFunction  extends io.TextScope implements IFunction {
     constructor(public readonly name:string, 
                 public readonly returnVal:string, 
                 public readonly args:string,       
                 public readonly isConst: boolean,
-                private readonly classNameGen:ClassNameGenerator
-                ) {}
+                private readonly classNameGen:ClassNameGenerator,
+                scope: io.TextScope
+                ) {
+                    super(scope.scopeStart, scope.scopeEnd);
+                }
+                
+    getSignature(): io.ISignaturable {
+        return new MemberFunctionSignature(this.classNameGen.getBaseName(), this);
+    }
 
-    async serialize(mode:SerializableMode) {
+    async serialize(mode:io.SerializableMode) {
         let serial = "";
         
         switch (mode) {
-            case SerializableMode.source:
+            case io.SerializableMode.source:
                 serial = await this.getHeading(mode) + " {\n";
                 if (this.returnVal !== "void") {
                     serial += "\t" + this.returnVal + " returnValue;\n\treturn returnValue;\n";
@@ -21,7 +58,7 @@ export class MemberFunction implements IFunction {
                 serial += "}";
                 break;
             
-            case SerializableMode.header:
+            case io.SerializableMode.header:
                 serial = await this.getHeading(mode) + ";";
                 break;
 
@@ -33,23 +70,20 @@ export class MemberFunction implements IFunction {
     }
 
 
-    protected async getHeading(mode:SerializableMode) {
+    protected async getHeading(mode:io.SerializableMode) {
 
         switch (mode) {
-            case SerializableMode.header:
-            case SerializableMode.implHeader:
-            case SerializableMode.interfaceHeader:
+            case io.SerializableMode.header:
+            case io.SerializableMode.implHeader:
+            case io.SerializableMode.interfaceHeader:
                 return this.returnVal + " " + this.name + " (" + this.args + ")" + (this.isConst? " const" : "");
-            case SerializableMode.source:
-            case SerializableMode.implSource:
+            case io.SerializableMode.source:
+            case io.SerializableMode.implSource:
                 return this.returnVal + " " + await this.classNameGen.createName(mode) + "::" + this.name + " (" + this.args + ")" + (this.isConst? " const" : "");
             default:
                 break;
         }
 
-    }
-
-    protected getHeaderSignature() {
     }
 }
 
@@ -58,19 +92,20 @@ export class VirtualMemberFunction extends MemberFunction {
                 returnVal:string, 
                 args:string,       
                 isConst: boolean,
-                classNameGen:ClassNameGenerator) {
-                   super(name,returnVal,args,isConst, classNameGen);
+                classNameGen:ClassNameGenerator,
+                scope: io.TextScope) {
+                   super(name,returnVal,args,isConst, classNameGen, scope);
                 }
 
-    async serialize(mode:SerializableMode) {
+    async serialize(mode:io.SerializableMode) {
         let serial = "";
         
         switch (mode) {
-            case SerializableMode.header:
+            case io.SerializableMode.header:
                 serial = await super.getHeading(mode) + " override;";
                 break;
             
-            case SerializableMode.interfaceHeader:
+            case io.SerializableMode.interfaceHeader:
                 serial = "virtual " + await super.getHeading(mode) + " =0;";
                 break;
 
@@ -88,15 +123,16 @@ export class StaticMemberFunction extends MemberFunction {
                 returnVal:string, 
                 args:string,       
                 isConst: boolean,
-                classNameGen:ClassNameGenerator) {
-                   super(name,returnVal,args,isConst, classNameGen);
+                classNameGen:ClassNameGenerator,
+                scope: io.TextScope) {
+                   super(name,returnVal,args,isConst, classNameGen, scope);
                 }
 
-    async serialize(mode:SerializableMode) {
+    async serialize(mode:io.SerializableMode) {
         let serial = "";
         
         switch (mode) {
-            case SerializableMode.source:
+            case io.SerializableMode.source:
                 serial = await this.getHeading(mode) + " {\n";
                 if (this.returnVal !== "void") {
                     serial += "\t" + this.returnVal + " returnValue;\n\treturn returnValue;\n";
@@ -104,7 +140,7 @@ export class StaticMemberFunction extends MemberFunction {
                 serial += "}";
                 break;
             
-            case SerializableMode.header:
+            case io.SerializableMode.header:
                 serial = "static " + await this.getHeading(mode) + ";";
                 break;
 
@@ -122,23 +158,24 @@ export class PureVirtualMemberFunction  extends MemberFunction{
                 returnVal:string, 
                 args:string,       
                 isConst: boolean,
-                classNameGen:ClassNameGenerator) {
-                    super(name,returnVal,args,isConst,classNameGen);
+                classNameGen:ClassNameGenerator,
+                scope: io.TextScope) {
+                    super(name,returnVal,args,isConst,classNameGen,scope);
                 }
 
-    async serialize(mode:SerializableMode) {
+    async serialize(mode:io.SerializableMode) {
         let serial = "";
         
         switch (mode) {
-            case SerializableMode.header:
+            case io.SerializableMode.header:
                 serial = "virtual " + await super.getHeading(mode) + " =0;";
                 break;
 
-            case SerializableMode.implHeader:
+            case io.SerializableMode.implHeader:
                 serial = await super.getHeading(mode) + " override;";
                 break;
 
-            case SerializableMode.implSource:                
+            case io.SerializableMode.implSource:                
                 serial = await this.getHeading(mode) + " {\n";
                 if (this.returnVal !== "void") {
                     serial += "\t" + this.returnVal + " returnValue;\n\treturn returnValue;\n";
@@ -146,8 +183,8 @@ export class PureVirtualMemberFunction  extends MemberFunction{
                 serial += "}";
                 break;
 
-            case SerializableMode.interfaceHeader:
-            case SerializableMode.source:
+            case io.SerializableMode.interfaceHeader:
+            case io.SerializableMode.source:
             default:
                 serial = "";
                 break;
@@ -155,9 +192,4 @@ export class PureVirtualMemberFunction  extends MemberFunction{
     
         return serial;
     }
-
 }
-
-
-
-//TODO STATIC

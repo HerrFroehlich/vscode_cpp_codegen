@@ -297,20 +297,20 @@ export abstract class HeaderParser {
                 if (match.virtualMatch) {
                     if (match.pureMatch) {
                         newFunc = new cpp.PureVirtualMemberFunction(match.nameMatch, match.returnValMatch,
-                             match.argsMatch, match.constMatch, classNameGen);
+                             match.argsMatch, match.constMatch, classNameGen, regexMatch as io.TextScope);
                     }
                     else {
                         newFunc = new cpp.VirtualMemberFunction(match.nameMatch, match.returnValMatch,
-                             match.argsMatch, match.constMatch, classNameGen);
+                             match.argsMatch, match.constMatch, classNameGen, regexMatch as io.TextScope);
                     }
                 }
                 else if (match.staticMatch) {
                     newFunc = new cpp.StaticMemberFunction(match.nameMatch, match.returnValMatch,
-                        match.argsMatch, match.constMatch, classNameGen);
+                        match.argsMatch, match.constMatch, classNameGen, regexMatch as io.TextScope);
                 }
                 else {
                     newFunc = new cpp.MemberFunction(match.nameMatch, match.returnValMatch,
-                        match.argsMatch, match.constMatch, classNameGen);
+                        match.argsMatch, match.constMatch, classNameGen, regexMatch as io.TextScope);
                 }
 
                 memberFunctions.push(newFunc);
@@ -381,7 +381,8 @@ export abstract class HeaderParser {
                 let match = new StandaloneFunctionMatch(regexMatch);
                 standaloneFunctions.push(new cpp.StandaloneFunction(match.nameMatch, 
                     match.returnValMatch, 
-                    match.argsMatch));
+                    match.argsMatch,
+                    regexMatch as io.TextScope));
             }
         );
 

@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 // import * as myExtension from '../../extension';
 import {HeaderParser} from '../../HeaderParser';
 import {IFunction} from '../../cpp';
-import { TextFragment } from '../../io';
+import {TextFragment, ISerializable, TextScope, ISignaturable } from '../../io';
 
 suite('Parser Standalone Functions Tests', () => {
 	// vscode.window.showInformationMessage('Start all tests.');
@@ -77,4 +77,20 @@ const XYZ* fncName (int arg1,
 		assert.strictEqual(functions[0].returnVal, "const XYZ*");
 		done();
 	});
+
+	test('CreateMemberFunctionSignatures', (done) => {
+		const testContent = TextFragment.createFromString(`
+		int fncName(); 
+		`);
+		const testClassName = "TestClass";
+
+		let parsedFunctions = HeaderParser.parseStandaloneFunctiones(testContent);
+		assert.strictEqual(parsedFunctions.length, 1);
+		
+		let signature:ISignaturable = parsedFunctions[0].getSignature();
+		assert.strictEqual(signature.serializable, parsedFunctions[0] as ISerializable);
+		assert.strictEqual(signature.textScope, parsedFunctions[0] as TextScope);
+		assert.strictEqual(signature.signature, "fncName()");
+		done();
+	});	
 });

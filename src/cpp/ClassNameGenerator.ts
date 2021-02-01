@@ -6,6 +6,10 @@ export class ClassNameGenerator {
                 private readonly _nameInputProvider: io.INameInputProvider = {}) {
     }
 
+getBaseName(): string {
+    return this._origName;
+}
+
  async createName(mode:io.SerializableMode): Promise<string> {
         let createdName = "";
 

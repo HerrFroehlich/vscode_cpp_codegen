@@ -8,8 +8,8 @@ import * as vscode from 'vscode';
 import { callItAsync } from "./utils";
 
 import {HeaderParser} from '../../HeaderParser';
-import {ClassNameGenerator, MemberFunction, SerializableMode} from '../../cpp';
-import {TextFragment } from '../../io';
+import {ClassNameGenerator, MemberFunction} from '../../cpp';
+import {TextFragment, SerializableMode, ISerializable, TextScope, ISignaturable } from '../../io';
 
 const argData = ["", "int test", "int test1, const Class* test2, void* test3", "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t"];
 
@@ -265,6 +265,7 @@ suite('Full Member Function Tests', () => {
 		done();
 		});
 	});
+
 	describe('ParseAndSerializeSingleStatic', function() {
 		callItAsync("With function arguments ${value}", argData, async function (done:Done, arg:string) {
 		const testContent = TextFragment.createFromString( "static int fncName("+arg+"); ");
@@ -410,4 +411,65 @@ suite('Full Member Function Tests', () => {
 
 		done();
 	});
+
+	test('CreateMemberFunctionSignatures', (done) => {
+		const testContent = TextFragment.createFromString(`
+		int fncName(); 
+		int fncName2(int* arg, std::string arg2);`);
+		const testClassName = "TestClass";
+		const classNameGen = new ClassNameGenerator(testClassName, false);
+
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
+		assert.strictEqual(parsedFunctions.length, 2);
+
+		let memberFnct:MemberFunction = parsedFunctions[0] as MemberFunction;
+		let signature = memberFnct.getSignature();
+		assert.strictEqual(signature.serializable, memberFnct as ISerializable);
+		assert.strictEqual(signature.textScope, memberFnct as TextScope);
+		assert.strictEqual(signature.signature, "TestClass::fncName()");
+
+		memberFnct = parsedFunctions[1] as MemberFunction;
+		signature = memberFnct.getSignature();
+		assert.strictEqual(signature.serializable, memberFnct as ISerializable);
+		assert.strictEqual(signature.textScope, memberFnct as TextScope);
+		assert.strictEqual(signature.signature, "TestClass::fncName2(int*arg,std::stringarg2)");
+
+		done();
+	});	
+
+	test('ComparingMemberFunctionSignatures', (done) => {
+		const testContent = TextFragment.createFromString(`
+		int fncName(); 
+		int fncName2(int* arg, std::string arg2);`);
+		const testClassName = "TestClass";
+		const classNameGen = new ClassNameGenerator(testClassName, false);
+
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
+		assert.strictEqual(parsedFunctions.length, 2);
+
+		let signature = parsedFunctions[0].getSignature();
+		let signature2 = parsedFunctions[1].getSignature();
+		assert.ok(signature.compare(signature));
+		assert.ok(!signature.compare(signature2));
+
+		done();
+	});	
+
+	test('ComparingMemberFunctionSignatureNamespaces', (done) => {
+		const testContent = TextFragment.createFromString(`
+		int fncName();`);
+		const testClassName = "TestClass";
+		const classNameGen = new ClassNameGenerator(testClassName, false);
+
+		let parsedFunctions = HeaderParser.parseClassMemberFunctions(testContent, classNameGen);
+		assert.strictEqual(parsedFunctions.length, 1);
+
+		let signature = parsedFunctions[0].getSignature();
+		let signatureCopy = parsedFunctions[0].getSignature();
+		signature.namespaces.push("Namespace1", "Namespace2");
+		assert.ok(!signature.compare(signatureCopy));
+		assert.ok(signature.compare(signatureCopy, ["Namespace1", "Namespace2"]));
+
+		done();
+	});	
 });
