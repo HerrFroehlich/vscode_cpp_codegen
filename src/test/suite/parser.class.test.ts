@@ -9,7 +9,7 @@ import {HeaderParser} from '../../HeaderParser';
 import {IClass, ClassInterface, ClassImpl, IClassScope} from '../../cpp';
 import { callItAsync } from "./utils";
 
-import { TextFragment } from '../../io';
+import { TextFragment, TextScope, compareSignaturables } from '../../io';
 
 const argData = ["", "int test", "int test1, const Class* test2, void* test3", "int \ttest1,\t\n const\n Class* test2"];
 class TestData {
@@ -347,17 +347,17 @@ suite('Parser GeneralClasses Tests', () => {
 	});
 
 	describe('ParseClassWithConstructors', function() {
-		callItAsync("With constructors ${value}", ctorData, function (done:Done, functionTestData:TestData) {
+		callItAsync("With constructors ${value}", ctorData, function (done:Done, ctorTestData:TestData) {
 			const testContent = TextFragment.createFromString(
 			`class MyClass {
 			//implicit private
-				${functionTestData.content}
+				${ctorTestData.content}
 			public:
-				${functionTestData.content}
+				${ctorTestData.content}
 			protected:
-				${functionTestData.content}
+				${ctorTestData.content}
 			private:
-				${functionTestData.content}
+				${ctorTestData.content}
 			};
 			`);
 			let classes:IClass[] = HeaderParser.parseClasses(testContent);
@@ -376,8 +376,8 @@ suite('Parser GeneralClasses Tests', () => {
 	test('ParseClassWithDestructor', (done) => {
 		const testContent = TextFragment.createFromString(
 			`class MyClass {
-		//implicit private
-			~MyClass ();
+			public:
+				~MyClass ();		
 		};
 		`);
 		let classes: IClass[] = HeaderParser.parseClasses(testContent);
@@ -413,6 +413,51 @@ suite('Parser GeneralClasses Tests', () => {
 		assert.strictEqual(classes[0].destructor?.virtual, true);
 
 		done();		
+	});
+
+	test('ParseClassSignaturables', (done) => {
+		const testContent = TextFragment.createFromString(
+			`class MyClass {
+				public:
+					~MyClass ();		
+					MyClass();
+					void functionPublic(int arg, std::string arg2) const;
+				protected:				
+					MyClass(int arg);
+					void functionProtected(int arg, std::string arg2);
+				private:
+					MyClass(char arg);
+					void functionPrivate(int arg, std::string arg2);
+			};
+		`);
+		let classes: IClass[] = HeaderParser.parseClasses(testContent);
+
+		assert.strictEqual(classes.length, 1);
+		const signatures = classes[0].getSignatures();
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::~MyClass()", textScope: new TextScope(0,0) })).length, 1);
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::MyClass()", textScope: new TextScope(0,0) })).length, 1);
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::MyClass(intarg)", textScope: new TextScope(0,0) })).length, 1);
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::MyClass(chararg)", textScope: new TextScope(0,0) })).length, 1);
+
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::functionPublic(intarg,std::stringarg2)const", textScope: new TextScope(0,0) })).length, 1);
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::functionProtected(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+		assert.strictEqual(
+			signatures.filter(sig => compareSignaturables(sig,  
+				{namespaces:[] as string[], signature:"MyClass::functionPrivate(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+
+		done();
 	});
 
 });

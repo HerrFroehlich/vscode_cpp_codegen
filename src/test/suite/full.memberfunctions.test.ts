@@ -9,7 +9,7 @@ import { callItAsync } from "./utils";
 
 import {HeaderParser} from '../../HeaderParser';
 import {ClassNameGenerator, MemberFunction} from '../../cpp';
-import {TextFragment, SerializableMode, ISerializable, TextScope, ISignaturable } from '../../io';
+import {TextFragment, SerializableMode, ISerializable, TextScope, compareSignaturables} from '../../io';
 
 const argData = ["", "int test", "int test1, const Class* test2, void* test3", "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t"];
 
@@ -414,7 +414,7 @@ suite('Full Member Function Tests', () => {
 
 	test('CreateMemberFunctionSignatures', (done) => {
 		const testContent = TextFragment.createFromString(`
-		int fncName(); 
+		int fncName() const; 
 		int fncName2(int* arg, std::string arg2);`);
 		const testClassName = "TestClass";
 		const classNameGen = new ClassNameGenerator(testClassName, false);
@@ -426,7 +426,7 @@ suite('Full Member Function Tests', () => {
 		let signature = memberFnct.getSignature();
 		assert.strictEqual(signature.serializable, memberFnct as ISerializable);
 		assert.strictEqual(signature.textScope, memberFnct as TextScope);
-		assert.strictEqual(signature.signature, "TestClass::fncName()");
+		assert.strictEqual(signature.signature, "TestClass::fncName()const");
 
 		memberFnct = parsedFunctions[1] as MemberFunction;
 		signature = memberFnct.getSignature();
@@ -449,8 +449,8 @@ suite('Full Member Function Tests', () => {
 
 		let signature = parsedFunctions[0].getSignature();
 		let signature2 = parsedFunctions[1].getSignature();
-		assert.ok(signature.compare(signature));
-		assert.ok(!signature.compare(signature2));
+		assert.ok(compareSignaturables(signature, signature));
+		assert.ok(!compareSignaturables(signature, signature2));
 
 		done();
 	});	
@@ -467,8 +467,8 @@ suite('Full Member Function Tests', () => {
 		let signature = parsedFunctions[0].getSignature();
 		let signatureCopy = parsedFunctions[0].getSignature();
 		signature.namespaces.push("Namespace1", "Namespace2");
-		assert.ok(!signature.compare(signatureCopy));
-		assert.ok(signature.compare(signatureCopy, ["Namespace1", "Namespace2"]));
+		assert.ok(!compareSignaturables(signature, signatureCopy));
+		assert.ok(compareSignaturables(signature, signatureCopy, ["Namespace1", "Namespace2"]));
 
 		done();
 	});	

@@ -7,11 +7,11 @@ export interface IFunction extends io.ISerializable, io.TextScope {
     readonly args: string;
 }
 
-export interface IConstructor extends io.ISerializable {
+export interface IConstructor extends io.ISerializable, io.TextScope {
     readonly args: string;
 }
 
-export interface IDestructor extends io.ISerializable {
+export interface IDestructor extends io.ISerializable, io.TextScope {
     readonly virtual: boolean;
 }
 
@@ -26,6 +26,7 @@ export interface IClassScope extends io.ISerializable, io.IDeserializable {
 
 export interface IClass extends io.ISerializable, io.IDeserializable, io.TextScope {
     tryAddNestedClass(possibleNestedClass: IClass):boolean;
+    getSignatures(): io.ISignaturable[];
     readonly name: string;
     readonly publicScope : IClassScope;
     readonly privateScope : IClassScope;
@@ -36,6 +37,7 @@ export interface IClass extends io.ISerializable, io.IDeserializable, io.TextSco
 
 export interface INamespace extends io.ISerializable, io.IDeserializable, io.TextScope {
     tryAddNestedNamespace(possibleNestedClass: INamespace):boolean;
+    getSignatures(): io.ISignaturable[];
     readonly name:string;
     readonly classes:IClass[]; 
     readonly functions:IFunction[];

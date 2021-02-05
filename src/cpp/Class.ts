@@ -3,9 +3,12 @@ import {HeaderParser} from "../HeaderParser";
 import { ClassNameGenerator } from "./ClassNameGenerator";
 import * as io from "../io";
 
-export class ClassConstructor implements IConstructor {
+// TODO Nested class handling needs work: we need to pass the surround class name for serialization and signatures => new Class type 
+export class ClassConstructor extends io.TextScope implements IConstructor {
     constructor(public readonly args:string,
-                private readonly classNameGen:ClassNameGenerator) {}
+                private readonly classNameGen:ClassNameGenerator, scope:io.TextScope) {
+                    super(scope.scopeStart, scope.scopeEnd);
+                }
     async serialize (mode: io.SerializableMode): Promise<string> {
 
         let serial = "";
@@ -27,10 +30,24 @@ export class ClassConstructor implements IConstructor {
         return serial;
     }
 } 
+class ClassConstructorSignature implements io.ISignaturable {
+    constructor(className:string, classConstructor: IConstructor) {
+        this.textScope = classConstructor as io.TextScope;
+        this.signature = className + "::" + className + "(" + classConstructor.args.replace(/\s/g,'') + ")";
+        this.serializable = classConstructor as io.ISerializable;
+    }
+    textScope: io.TextScope;
+    signature: string;
+    namespaces: string[] = [];
 
-export class ClassDestructor  implements IDestructor {
+    serializable: io.ISerializable;
+}
+
+export class ClassDestructor extends io.TextScope  implements IDestructor {
     constructor(public readonly virtual: boolean,
-                private readonly classNameGen: ClassNameGenerator) {}
+                private readonly classNameGen: ClassNameGenerator, scope:io.TextScope) {
+                    super(scope.scopeStart, scope.scopeEnd);
+                }
     async serialize (mode: io.SerializableMode): Promise<string> {
 
         let serial = "";
@@ -56,6 +73,19 @@ export class ClassDestructor  implements IDestructor {
         return serial;
     }
 } 
+
+class ClassDestructorSignature implements io.ISignaturable {
+    constructor(className:string, classDestructor: IDestructor) {
+        this.textScope = classDestructor as io.TextScope;
+        this.signature = className + "::~" + className + "()";
+        this.serializable = classDestructor as io.ISerializable;
+    }
+    textScope: io.TextScope;
+    signature: string;
+    namespaces: string[] = [];
+
+    serializable: io.ISerializable;
+}
 
 enum ClassScopeType {
     private,
@@ -177,7 +207,7 @@ class ClassBase  extends io.TextScope implements IClass {
         this.protectedScope.deserialize(data);
     }
 
-    async serialize (mode:io.SerializableMode) {   
+    async serialize (mode:io.SerializableMode) {
         let serial = "";
         let suffix = "";
         switch (mode) {
@@ -220,6 +250,26 @@ class ClassBase  extends io.TextScope implements IClass {
         serial += " {\n";
 
         return serial;
+    }
+
+    getSignatures(): io.ISignaturable [] {
+        const signaturables:io.ISignaturable[] = [];
+        signaturables.push(...this.getScopeSignatures(this.publicScope));
+        signaturables.push(...this.getScopeSignatures(this.privateScope));
+        signaturables.push(...this.getScopeSignatures(this.protectedScope));
+        if (this.destructor) {
+            signaturables.push(new ClassDestructorSignature(this.name, this.destructor));
+        }
+        return signaturables;
+    }
+
+    private getScopeSignatures(classScope:IClassScope): io.ISignaturable [] {
+        const signaturables:io.ISignaturable[] = [];
+        signaturables.push(...classScope.constructors.map(ctor => new ClassConstructorSignature(this.name, ctor)));
+        signaturables.push(...classScope.memberFunctions.map(memberFunction => memberFunction.getSignature()));    
+        const nestedSignatures = classScope.nestedClasses.map(nestedClass => nestedClass.getSignatures());
+        signaturables.push(...([] as io.ISignaturable[]).concat(...nestedSignatures));
+        return signaturables;
     }
 
     private _classNameGen: ClassNameGenerator;

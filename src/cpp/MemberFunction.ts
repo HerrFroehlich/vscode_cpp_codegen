@@ -14,21 +14,6 @@ class MemberFunctionSignature implements io.ISignaturable {
     namespaces: string[] = [];
 
     serializable: io.ISerializable;
-    compare(other: io.ISignaturable, availableNamespaces: string[] = []): boolean {
-        // TODO function arg signature
-        if (this.signature !== other.signature) {
-            return false;
-        } else {
-            const namespaceDiff = this.namespaces
-            .filter(ns => !other.namespaces.includes(ns))
-            .concat(other.namespaces.filter(ns => !this.namespaces.includes(ns)));
-            if (!namespaceDiff.length) {
-                return true;
-            }
-            
-            return namespaceDiff.every((ns => availableNamespaces.includes(ns)));
-        }
-    }
 }
 
 export class MemberFunction  extends io.TextScope implements IFunction {

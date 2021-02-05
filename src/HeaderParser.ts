@@ -170,7 +170,7 @@ class ClassDestructorMatch {
     }
 
     static getRegexStr(classname: string) {
-        return joinStringsWithWhiteSpace(this.mayHaveVirtualRegex, "~" + classname, "\\([\\s\\S]*\\)", ";");        
+        return joinStringsWithWhiteSpace(this.mayHaveVirtualRegex, "~" + classname, "\\([\\s\\S]*?\\)", ";");        
     }
     private static readonly mayHaveVirtualRegex:string = '(virtual)?';
 
@@ -272,7 +272,7 @@ export abstract class HeaderParser {
         data.removeMatching(ClassConstructorMatch.getRegexStr(className)).forEach(
             (regexMatch) => {
                 let match = new ClassConstructorMatch(regexMatch);
-                ctors.push(new cpp.ClassConstructor(match.argsMatch, classNameGen));
+                ctors.push(new cpp.ClassConstructor(match.argsMatch, classNameGen, regexMatch as io.TextScope));
             });
         return ctors;
     }
@@ -282,7 +282,7 @@ export abstract class HeaderParser {
         data.removeMatching(ClassDestructorMatch.getRegexStr(className)).forEach(
             (regexMatch) => {
                 let match = new ClassDestructorMatch(regexMatch);
-                deconstructors.push(new cpp.ClassDestructor(match.isVirtual, classNameGen));
+                deconstructors.push(new cpp.ClassDestructor(match.isVirtual, classNameGen, regexMatch as io.TextScope));
             });
         return deconstructors;
     }

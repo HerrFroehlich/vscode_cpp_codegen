@@ -4,7 +4,7 @@ import { Done, describe} from 'mocha';
 // import * as myExtension from '../../extension';
 import {HeaderParser} from '../../HeaderParser';
 import {INamespace, Namespace} from '../../cpp';
-import {TextFragment} from '../../io';
+import {TextFragment, compareSignaturables, TextScope} from '../../io';
 import { callItAsync } from "./utils";
 class TestData {
 	constructor(public content:string, public nClasses:number, public nFunc:number){};
@@ -157,7 +157,7 @@ suite('Parser Namespace Tests', () => {
 		});
 	});
 
-	describe('ParseNestedNamespaceC17', function() {
+	describe('ParseNestedNamespaceCpp17', function() {
 		callItAsync("With content ${value}", namespacesData, function (done:Done, data:TestData) {
 			const testData = TextFragment.createFromString( 
 			`
@@ -177,5 +177,47 @@ suite('Parser Namespace Tests', () => {
 			assert.ok(namespaces[0] instanceof Namespace);
 			done();
 		});
+	});
+
+	test('ParseNamespaceSignature', (done) => { 
+			const testData = TextFragment.createFromString( 
+			`
+				namespace namespaceName
+				{
+					class MyClass {
+						public:
+							void functionPublic(int arg, std::string arg2);
+					};
+					void standaloneFunction (int arg);
+
+					namespace namespaceName2
+					{
+						class MyClass {
+							public:
+							void functionPublic(int arg, std::string arg2);
+						};
+						void standaloneFunction (int arg);
+					}
+				}
+			`
+			);
+			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
+			assert.strictEqual(namespaces.length, 1);
+
+			const signatures = namespaces[0].getSignatures();
+			assert.strictEqual(
+				signatures.filter(sig => compareSignaturables(sig,  
+					{namespaces:["namespaceName"], signature:"MyClass::functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+			assert.strictEqual(
+				signatures.filter(sig => compareSignaturables(sig,  
+					{namespaces:["namespaceName"], signature:"standaloneFunction(intarg)", textScope: new TextScope(0,0) })).length, 1);
+
+			assert.strictEqual(
+				signatures.filter(sig => compareSignaturables(sig,  
+					{namespaces:["namespaceName", "namespaceName2"], signature:"MyClass::functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+			assert.strictEqual(
+				signatures.filter(sig => compareSignaturables(sig,  
+					{namespaces:["namespaceName", "namespaceName2"], signature:"standaloneFunction(intarg)", textScope: new TextScope(0,0) })).length, 1);
+			done();
 	});
 });

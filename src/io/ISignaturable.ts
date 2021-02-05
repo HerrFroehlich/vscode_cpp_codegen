@@ -7,5 +7,20 @@ export interface ISignaturable {
     signature: string;
     namespaces: string[];
     serializable?: ISerializable;
-    compare(other:ISignaturable, availableNamespaces?:string[]): boolean;
+}
+
+export function compareSignaturables(signaturable: ISignaturable, otherSignaturable: ISignaturable, availableNamespaces: string[] = []): boolean {
+    // TODO function arg signature
+    if (signaturable.signature !== otherSignaturable.signature) {
+        return false;
+    } else {
+        const namespaceDiff = signaturable.namespaces
+        .filter(ns => !otherSignaturable.namespaces.includes(ns))
+        .concat(otherSignaturable.namespaces.filter(ns => !signaturable.namespaces.includes(ns)));
+        if (!namespaceDiff.length) {
+            return true;
+        }
+        
+        return namespaceDiff.every((ns => availableNamespaces.includes(ns)));
+    }
 }
