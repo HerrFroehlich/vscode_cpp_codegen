@@ -1,9 +1,10 @@
 import { IClass, IFunction, INamespace} from "./TypeInterfaces";
-import { HeaderParser } from "./HeaderParser";
+import { HeaderParser } from "../io/HeaderParser";
+import { INameInputProvider } from "../INameInputProvider";
 import * as io from "../io";
 export class Namespace  extends io.TextScope implements INamespace {
     
-    constructor(name:string, scope:io.TextScope,  nameInputProvider?: io.INameInputProvider) {
+    constructor(name:string, scope:io.TextScope,  nameInputProvider?: INameInputProvider) {
 
         super(scope.scopeStart, scope.scopeEnd);
         this.name = name;
@@ -56,12 +57,12 @@ export class Namespace  extends io.TextScope implements INamespace {
     functions:IFunction[];
     subnamespaces: INamespace[];
     
-    private readonly _nameInputProvider: io.INameInputProvider | undefined;
+    private readonly _nameInputProvider: INameInputProvider | undefined;
 }
 
 export class NoneNamespace extends io.TextScope implements INamespace {
     
-    constructor(scope:io.TextScope, nameInputProvider?: io.INameInputProvider) {
+    constructor(scope:io.TextScope, nameInputProvider?: INameInputProvider) {
         super(scope.scopeStart, scope.scopeEnd);
         this.name = "";
         this.classes = [];
@@ -99,5 +100,5 @@ export class NoneNamespace extends io.TextScope implements INamespace {
     classes:IClass[]; 
     functions:IFunction[];
     readonly subnamespaces:INamespace[];
-    private readonly _nameInputProvider: io.INameInputProvider | undefined;
+    private readonly _nameInputProvider: INameInputProvider | undefined;
 }

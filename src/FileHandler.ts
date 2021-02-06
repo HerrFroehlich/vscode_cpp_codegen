@@ -1,11 +1,13 @@
 
-import { SerializableMode, ISerializable, IDeserializable } from "./ISerial";
+import { SerializableMode, ISerializable, IDeserializable } from "./io/ISerial";
 import { workspaceDirectoryFinder } from "./WorkspaceDirectories";
-import * as cpp from '../cpp';
+import { INameInputProvider } from "./INameInputProvider";
+import * as cpp from './cpp';
 import * as vscode from 'vscode';
 import * as fs from "fs";
 import * as path from "path";
 
+ // TODO move interfaces to seperate files
 export interface IFile extends ISerializable, IDeserializable {
     getPath(): string;
     readonly directory: string;
@@ -13,9 +15,6 @@ export interface IFile extends ISerializable, IDeserializable {
     readonly extension: string;
 }
 
-export interface INameInputProvider {
-    getInterfaceName?(origName: string): string | Promise<string>;
-}
 class DirectoryItem implements vscode.QuickPickItem {
 
 	label: string;

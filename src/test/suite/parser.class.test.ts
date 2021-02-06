@@ -5,7 +5,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Done, describe} from 'mocha';
 // import * as myExtension from '../../extension';
-import {HeaderParser} from '../../cpp/HeaderParser';
+import {HeaderParser} from '../../io/HeaderParser';
 import {IClass, ClassInterface, ClassImpl, IClassScope} from '../../cpp';
 import { callItAsync } from "./utils";
 

@@ -2,7 +2,7 @@ import * as assert from 'assert';
 
 import { Done, describe} from 'mocha';
 // import * as myExtension from '../../extension';
-import {HeaderParser} from '../../cpp/HeaderParser';
+import {HeaderParser} from '../../io/HeaderParser';
 import {INamespace, Namespace} from '../../cpp';
 import {TextFragment, compareSignaturables, TextScope} from '../../io';
 import { callItAsync } from "./utils";

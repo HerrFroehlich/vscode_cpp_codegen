@@ -4,7 +4,10 @@ import { INamespace} from "./TypeInterfaces";
 import {FileBase} from './FileBase';
 import * as io from '../io';
 
-export class SourceFile extends FileBase implements io.IFile
+import { Configuration } from "../Configuration";
+import { IFile } from "../FileHandler";
+
+export class SourceFile extends FileBase implements IFile
 {
     constructor(filePath:string, content: string)
     {
@@ -24,7 +27,7 @@ export class SourceFile extends FileBase implements io.IFile
     }
 
     static generateFileHeader(outputFilePath: string, ...fileIncludePaths: string[]):string {
-        let fileHeader = io.Configuration.getFileHeaderForCppSource();
+        let fileHeader = Configuration.getFileHeaderForCppSource();
         fileHeader += super.createIncludeStatements(outputFilePath, ...fileIncludePaths);
         return fileHeader; 
     }

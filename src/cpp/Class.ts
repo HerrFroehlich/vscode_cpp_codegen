@@ -1,6 +1,7 @@
 import { IClass, IFunction, IConstructor, IDestructor, IClassScope} from "./TypeInterfaces";
-import {HeaderParser} from "./HeaderParser";
+import {HeaderParser} from "../io/HeaderParser";
 import { ClassNameGenerator } from "./ClassNameGenerator";
+import { INameInputProvider } from "../INameInputProvider";
 import * as io from "../io";
 
 // TODO Nested class handling needs work: we need to pass the surround class name for serialization and signatures => new Class type 
@@ -170,7 +171,7 @@ class ClassBase  extends io.TextScope implements IClass {
         public readonly name:string,
         public readonly inheritance: string[],
         private readonly _isInterface: boolean, 
-        nameInputProvider?: io.INameInputProvider) {
+        nameInputProvider?: INameInputProvider) {
         super(scope.scopeStart, scope.scopeEnd);
 
         this._classNameGen = new ClassNameGenerator(this.name, this._isInterface, nameInputProvider);
@@ -284,7 +285,7 @@ export class ClassImpl extends ClassBase {
         scope:io.TextScope,
         public readonly name:string,
         public readonly inheritance: string[],
-        nameInputProvider?: io.INameInputProvider) {
+        nameInputProvider?: INameInputProvider) {
         super(scope, name, inheritance, false, nameInputProvider);
     }
 
@@ -311,7 +312,7 @@ export class ClassInterface extends ClassBase {
         scope:io.TextScope,
         public readonly name:string,
         public readonly inheritance: string[],
-        nameInputProvider?: io.INameInputProvider) {
+        nameInputProvider?: INameInputProvider) {
         super(scope, name, inheritance, true, nameInputProvider);
     }
 
