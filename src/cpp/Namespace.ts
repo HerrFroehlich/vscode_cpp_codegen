@@ -1,5 +1,5 @@
 import { IClass, IFunction, INamespace} from "./TypeInterfaces";
-import { HeaderParser } from "../HeaderParser";
+import { HeaderParser } from "./HeaderParser";
 import * as io from "../io";
 export class Namespace  extends io.TextScope implements INamespace {
     

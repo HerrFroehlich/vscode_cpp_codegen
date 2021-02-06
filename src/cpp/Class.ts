@@ -1,5 +1,5 @@
 import { IClass, IFunction, IConstructor, IDestructor, IClassScope} from "./TypeInterfaces";
-import {HeaderParser} from "../HeaderParser";
+import {HeaderParser} from "./HeaderParser";
 import { ClassNameGenerator } from "./ClassNameGenerator";
 import * as io from "../io";
 

@@ -1,7 +1,7 @@
-import * as cpp from "./cpp";
-import { ClassDestructor, PureVirtualMemberFunction } from "./cpp";
-import * as io from "./io";
-import { TextBlock } from "./io";
+import * as cpp from ".";
+import { ClassDestructor, PureVirtualMemberFunction } from ".";
+import * as io from "../io";
+import { TextBlock } from "../io";
 
 function joinStringsWithFiller(strings:string[], filler:string):string {
     let joinedStrings = '';

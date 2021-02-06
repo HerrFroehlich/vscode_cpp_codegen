@@ -7,7 +7,7 @@ import { Done, describe, it, test } from 'mocha';
 import * as vscode from 'vscode';
 import { callItAsync } from "./utils";
 
-import {HeaderParser} from '../../HeaderParser';
+import {HeaderParser} from '../../cpp/HeaderParser';
 import {ClassNameGenerator, MemberFunction} from '../../cpp';
 import {TextFragment, SerializableMode, ISerializable, TextScope, compareSignaturables} from '../../io';
 
