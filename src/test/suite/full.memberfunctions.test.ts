@@ -426,13 +426,15 @@ suite('Full Member Function Tests', () => {
 		let signature = memberFnct.getSignature();
 		assert.strictEqual(signature.serializable, memberFnct as ISerializable);
 		assert.strictEqual(signature.textScope, memberFnct as TextScope);
-		assert.strictEqual(signature.signature, "TestClass::fncName()const");
+		assert.strictEqual(signature.signature, "fncName()const");
+		assert.deepStrictEqual(signature.namespaces, ["TestClass"]);
 
 		memberFnct = parsedFunctions[1] as MemberFunction;
 		signature = memberFnct.getSignature();
 		assert.strictEqual(signature.serializable, memberFnct as ISerializable);
 		assert.strictEqual(signature.textScope, memberFnct as TextScope);
-		assert.strictEqual(signature.signature, "TestClass::fncName2(int*arg,std::stringarg2)");
+		assert.strictEqual(signature.signature, "fncName2(int*arg,std::stringarg2)");
+		assert.deepStrictEqual(signature.namespaces, ["TestClass"]);
 
 		done();
 	});	
@@ -466,7 +468,7 @@ suite('Full Member Function Tests', () => {
 
 		let signature = parsedFunctions[0].getSignature();
 		let signatureCopy = parsedFunctions[0].getSignature();
-		signature.namespaces.push("Namespace1", "Namespace2");
+		signature.namespaces.unshift("Namespace1", "Namespace2");
 		assert.ok(!compareSignaturables(signature, signatureCopy));
 		assert.ok(compareSignaturables(signature, signatureCopy, ["Namespace1", "Namespace2"]));
 

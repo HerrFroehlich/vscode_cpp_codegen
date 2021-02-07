@@ -207,14 +207,14 @@ suite('Parser Namespace Tests', () => {
 			const signatures = namespaces[0].getSignatures();
 			assert.strictEqual(
 				signatures.filter(sig => compareSignaturables(sig,  
-					{namespaces:["namespaceName"], signature:"MyClass::functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+					{namespaces:["namespaceName", "MyClass"], signature:"functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
 			assert.strictEqual(
 				signatures.filter(sig => compareSignaturables(sig,  
 					{namespaces:["namespaceName"], signature:"standaloneFunction(intarg)", textScope: new TextScope(0,0) })).length, 1);
 
 			assert.strictEqual(
 				signatures.filter(sig => compareSignaturables(sig,  
-					{namespaces:["namespaceName", "namespaceName2"], signature:"MyClass::functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+					{namespaces:["namespaceName", "namespaceName2", "MyClass"], signature:"functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
 			assert.strictEqual(
 				signatures.filter(sig => compareSignaturables(sig,  
 					{namespaces:["namespaceName", "namespaceName2"], signature:"standaloneFunction(intarg)", textScope: new TextScope(0,0) })).length, 1);

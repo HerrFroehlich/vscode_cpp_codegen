@@ -5,13 +5,14 @@ import * as io from "../io";
 class MemberFunctionSignature implements io.ISignaturable {
     constructor(className:string, memberFunction: MemberFunction) {
         this.textScope = memberFunction as io.TextScope;
-        this.signature = className + "::" + memberFunction.name + "(" + memberFunction.args.replace(/\s/g,'')
+        this.namespaces = [className];
+        this.signature = memberFunction.name + "(" + memberFunction.args.replace(/\s/g,'')
         + ")" + (memberFunction.isConst? "const" : "");
         this.serializable = memberFunction as io.ISerializable;
     }
     textScope: io.TextScope;
     signature: string;
-    namespaces: string[] = [];
+    namespaces: string[];
 
     serializable: io.ISerializable;
 }

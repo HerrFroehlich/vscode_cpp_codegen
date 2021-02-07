@@ -34,12 +34,13 @@ export class ClassConstructor extends io.TextScope implements IConstructor {
 class ClassConstructorSignature implements io.ISignaturable {
     constructor(className:string, classConstructor: IConstructor) {
         this.textScope = classConstructor as io.TextScope;
-        this.signature = className + "::" + className + "(" + classConstructor.args.replace(/\s/g,'') + ")";
+        this.namespaces = [className];
+        this.signature = className + "(" + classConstructor.args.replace(/\s/g,'') + ")";
         this.serializable = classConstructor as io.ISerializable;
     }
     textScope: io.TextScope;
     signature: string;
-    namespaces: string[] = [];
+    namespaces: string[];
 
     serializable: io.ISerializable;
 }
@@ -78,12 +79,13 @@ export class ClassDestructor extends io.TextScope  implements IDestructor {
 class ClassDestructorSignature implements io.ISignaturable {
     constructor(className:string, classDestructor: IDestructor) {
         this.textScope = classDestructor as io.TextScope;
-        this.signature = className + "::~" + className + "()";
+        this.namespaces = [className];
+        this.signature =  "~" + className + "()";
         this.serializable = classDestructor as io.ISerializable;
     }
     textScope: io.TextScope;
     signature: string;
-    namespaces: string[] = [];
+    namespaces: string[];
 
     serializable: io.ISerializable;
 }

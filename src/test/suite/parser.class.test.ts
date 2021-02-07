@@ -436,26 +436,26 @@ suite('Parser GeneralClasses Tests', () => {
 		const signatures = classes[0].getSignatures();
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::~MyClass()", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"~MyClass()", textScope: new TextScope(0,0) })).length, 1);
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::MyClass()", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"MyClass()", textScope: new TextScope(0,0) })).length, 1);
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::MyClass(intarg)", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"MyClass(intarg)", textScope: new TextScope(0,0) })).length, 1);
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::MyClass(chararg)", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"MyClass(chararg)", textScope: new TextScope(0,0) })).length, 1);
 
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::functionPublic(intarg,std::stringarg2)const", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"functionPublic(intarg,std::stringarg2)const", textScope: new TextScope(0,0) })).length, 1);
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::functionProtected(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"functionProtected(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
 		assert.strictEqual(
 			signatures.filter(sig => compareSignaturables(sig,  
-				{namespaces:[] as string[], signature:"MyClass::functionPrivate(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
+				{namespaces:["MyClass"], signature:"functionPrivate(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
 
 		done();
 	});
