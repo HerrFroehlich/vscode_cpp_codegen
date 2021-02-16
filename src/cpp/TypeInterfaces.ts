@@ -1,7 +1,6 @@
 import * as io from "../io";
 
 export interface IFunction extends io.ISerializable, io.TextScope {
-    getSignature(): io.ISignaturable;
     readonly name: string;
     readonly returnVal: string;
     readonly args: string;
@@ -26,7 +25,6 @@ export interface IClassScope extends io.ISerializable, io.IDeserializable {
 
 export interface IClass extends io.ISerializable, io.IDeserializable, io.TextScope {
     tryAddNestedClass(possibleNestedClass: IClass):boolean;
-    getSignatures(): io.ISignaturable[];
     readonly name: string;
     readonly publicScope : IClassScope;
     readonly privateScope : IClassScope;
@@ -37,7 +35,6 @@ export interface IClass extends io.ISerializable, io.IDeserializable, io.TextSco
 
 export interface INamespace extends io.ISerializable, io.IDeserializable, io.TextScope {
     tryAddNestedNamespace(possibleNestedClass: INamespace):boolean;
-    getSignatures(): io.ISignaturable[];
     readonly name:string;
     readonly classes:IClass[]; 
     readonly functions:IFunction[];

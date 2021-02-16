@@ -7,23 +7,14 @@ import * as io from '../io';
 import { Configuration } from "../Configuration";
 import { IFile } from "../FileHandler";
 
-export class SourceFile extends FileBase implements IFile
+export class SourceFile extends FileBase
 {
     constructor(filePath:string, content: string)
     {
         super(filePath);
-        this._namespaces = [];
-        this.deserialize(io.TextFragment.createFromString(content));
-    }
-
-    deserialize (fileContent: io.TextFragment)
-    {
-        //TODO
-    }
-
-    serialize (mode: io.SerializableMode)
-    {
-        return io.serializeArray(this._namespaces, mode);
+        const fileContent = io.TextFragment.createFromString(content);
+        io.SourceParser.parseComments(fileContent);
+        this._signatures = io.SourceParser.parseSignatures(fileContent);
     }
 
     static generateFileHeader(outputFilePath: string, ...fileIncludePaths: string[]):string {
@@ -32,6 +23,9 @@ export class SourceFile extends FileBase implements IFile
         return fileHeader; 
     }
 
-    static readonly extensions = ["cpp","cxx", "c"]; // TODO make extensions configurable
-    private readonly _namespaces: INamespace[];
+    getSignatures(): io.ISignaturable[] {
+        return this._signatures;
+    }
+
+    private readonly _signatures: io.ISignaturable[];
 } 

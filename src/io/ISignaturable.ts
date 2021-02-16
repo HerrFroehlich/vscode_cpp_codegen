@@ -1,12 +1,11 @@
 
 import {TextScope} from "./Text";
-import {ISerializable} from "./ISerial";
 
 export interface ISignaturable {
     textScope: TextScope
     signature: string;
     namespaces: string[];
-    serializable?: ISerializable;
+    content: string;
 }
 
 export function compareSignaturables(signaturable: ISignaturable, otherSignaturable: ISignaturable, availableNamespaces: string[] = []): boolean {

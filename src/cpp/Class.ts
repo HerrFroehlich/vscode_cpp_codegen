@@ -31,19 +31,6 @@ export class ClassConstructor extends io.TextScope implements IConstructor {
         return serial;
     }
 } 
-class ClassConstructorSignature implements io.ISignaturable {
-    constructor(className:string, classConstructor: IConstructor) {
-        this.textScope = classConstructor as io.TextScope;
-        this.namespaces = [className];
-        this.signature = className + "(" + classConstructor.args.replace(/\s/g,'') + ")";
-        this.serializable = classConstructor as io.ISerializable;
-    }
-    textScope: io.TextScope;
-    signature: string;
-    namespaces: string[];
-
-    serializable: io.ISerializable;
-}
 
 export class ClassDestructor extends io.TextScope  implements IDestructor {
     constructor(public readonly virtual: boolean,
@@ -75,20 +62,6 @@ export class ClassDestructor extends io.TextScope  implements IDestructor {
         return serial;
     }
 } 
-
-class ClassDestructorSignature implements io.ISignaturable {
-    constructor(className:string, classDestructor: IDestructor) {
-        this.textScope = classDestructor as io.TextScope;
-        this.namespaces = [className];
-        this.signature =  "~" + className + "()";
-        this.serializable = classDestructor as io.ISerializable;
-    }
-    textScope: io.TextScope;
-    signature: string;
-    namespaces: string[];
-
-    serializable: io.ISerializable;
-}
 
 enum ClassScopeType {
     private,
@@ -253,26 +226,6 @@ class ClassBase  extends io.TextScope implements IClass {
         serial += " {\n";
 
         return serial;
-    }
-
-    getSignatures(): io.ISignaturable [] {
-        const signaturables:io.ISignaturable[] = [];
-        signaturables.push(...this.getScopeSignatures(this.publicScope));
-        signaturables.push(...this.getScopeSignatures(this.privateScope));
-        signaturables.push(...this.getScopeSignatures(this.protectedScope));
-        if (this.destructor) {
-            signaturables.push(new ClassDestructorSignature(this.name, this.destructor));
-        }
-        return signaturables;
-    }
-
-    private getScopeSignatures(classScope:IClassScope): io.ISignaturable [] {
-        const signaturables:io.ISignaturable[] = [];
-        signaturables.push(...classScope.constructors.map(ctor => new ClassConstructorSignature(this.name, ctor)));
-        signaturables.push(...classScope.memberFunctions.map(memberFunction => memberFunction.getSignature()));    
-        const nestedSignatures = classScope.nestedClasses.map(nestedClass => nestedClass.getSignatures());
-        signaturables.push(...([] as io.ISignaturable[]).concat(...nestedSignatures));
-        return signaturables;
     }
 
     private _classNameGen: ClassNameGenerator;

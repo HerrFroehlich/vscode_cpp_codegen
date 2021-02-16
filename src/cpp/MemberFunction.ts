@@ -2,20 +2,6 @@ import { IFunction} from "./TypeInterfaces";
 import { ClassNameGenerator } from "./ClassNameGenerator";
 import * as io from "../io";
 
-class MemberFunctionSignature implements io.ISignaturable {
-    constructor(className:string, memberFunction: MemberFunction) {
-        this.textScope = memberFunction as io.TextScope;
-        this.namespaces = [className];
-        this.signature = memberFunction.name + "(" + memberFunction.args.replace(/\s/g,'')
-        + ")" + (memberFunction.isConst? "const" : "");
-        this.serializable = memberFunction as io.ISerializable;
-    }
-    textScope: io.TextScope;
-    signature: string;
-    namespaces: string[];
-
-    serializable: io.ISerializable;
-}
 
 export class MemberFunction  extends io.TextScope implements IFunction {
     constructor(public readonly name:string, 
@@ -27,10 +13,6 @@ export class MemberFunction  extends io.TextScope implements IFunction {
                 ) {
                     super(scope.scopeStart, scope.scopeEnd);
                 }
-                
-    getSignature(): io.ISignaturable {
-        return new MemberFunctionSignature(this.classNameGen.getBaseName(), this);
-    }
 
     async serialize(mode:io.SerializableMode) {
         let serial = "";

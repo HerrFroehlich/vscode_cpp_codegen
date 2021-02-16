@@ -102,7 +102,7 @@ class ClassPublicScopeMatch {
 class ClassConstructorMatch {
 
     constructor(regexMatch:io.TextRegexMatch) {
-        if (regexMatch.groupMatches.length !== ClassPublicScopeMatch.nofGroupMatches) {
+        if (regexMatch.groupMatches.length !== ClassConstructorMatch.nofGroupMatches) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
 
@@ -123,7 +123,7 @@ class ClassConstructorMatch {
 class ClassDestructorMatch {
 
     constructor(regexMatch:io.TextRegexMatch) {
-        if (regexMatch.groupMatches.length !== ClassPublicScopeMatch.nofGroupMatches) {
+        if (regexMatch.groupMatches.length !== ClassDestructorMatch.nofGroupMatches) {
             throw new Error("ParserError: Unexpected number of matches!");  
         }
 

@@ -178,46 +178,4 @@ suite('Parser Namespace Tests', () => {
 			done();
 		});
 	});
-
-	test('ParseNamespaceSignature', (done) => { 
-			const testData = TextFragment.createFromString( 
-			`
-				namespace namespaceName
-				{
-					class MyClass {
-						public:
-							void functionPublic(int arg, std::string arg2);
-					};
-					void standaloneFunction (int arg);
-
-					namespace namespaceName2
-					{
-						class MyClass {
-							public:
-							void functionPublic(int arg, std::string arg2);
-						};
-						void standaloneFunction (int arg);
-					}
-				}
-			`
-			);
-			let namespaces:INamespace[] = HeaderParser.parseNamespaces(testData);
-			assert.strictEqual(namespaces.length, 1);
-
-			const signatures = namespaces[0].getSignatures();
-			assert.strictEqual(
-				signatures.filter(sig => compareSignaturables(sig,  
-					{namespaces:["namespaceName", "MyClass"], signature:"functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
-			assert.strictEqual(
-				signatures.filter(sig => compareSignaturables(sig,  
-					{namespaces:["namespaceName"], signature:"standaloneFunction(intarg)", textScope: new TextScope(0,0) })).length, 1);
-
-			assert.strictEqual(
-				signatures.filter(sig => compareSignaturables(sig,  
-					{namespaces:["namespaceName", "namespaceName2", "MyClass"], signature:"functionPublic(intarg,std::stringarg2)", textScope: new TextScope(0,0) })).length, 1);
-			assert.strictEqual(
-				signatures.filter(sig => compareSignaturables(sig,  
-					{namespaces:["namespaceName", "namespaceName2"], signature:"standaloneFunction(intarg)", textScope: new TextScope(0,0) })).length, 1);
-			done();
-	});
 });

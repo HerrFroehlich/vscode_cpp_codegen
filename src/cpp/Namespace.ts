@@ -35,23 +35,6 @@ export class Namespace  extends io.TextScope implements INamespace {
         this.functions = HeaderParser.parseStandaloneFunctiones(data);
     }
 
-    getSignatures(): io.ISignaturable [] {
-        const signaturables:io.ISignaturable[] = [];  
-        const classSignatures = ([] as io.ISignaturable[]).concat(...this.classes.map(cppClass => cppClass.getSignatures()));   
-        classSignatures.forEach(signature => signature.namespaces.unshift(this.name));
-        signaturables.push(...classSignatures);
-        const nsSignatures =  ([] as io.ISignaturable[]).concat(...this.subnamespaces.map(ns => ns.getSignatures()));    
-        nsSignatures.forEach(signature => signature.namespaces.unshift(this.name));
-        signaturables.push(...nsSignatures);
-        signaturables.push(...this.functions.map(func => {
-            const signature = func.getSignature();
-            signature.namespaces.unshift(this.name);
-            return signature;
-        } ));
-        
-        return signaturables;
-    }
-
     name:string;
     classes:IClass[]; 
     functions:IFunction[];
@@ -83,17 +66,6 @@ export class NoneNamespace extends io.TextScope implements INamespace {
     deserialize (data: io.TextFragment) {
         this.classes = HeaderParser.parseClasses(data, this._nameInputProvider);
         this.functions = HeaderParser.parseStandaloneFunctiones(data);
-    }
-
-    getSignatures(): io.ISignaturable [] {
-        const signaturables:io.ISignaturable[] = [];  
-        const classSignatures = ([] as io.ISignaturable[]).concat(...this.classes.map(cppClass => cppClass.getSignatures()));   
-        signaturables.push(...classSignatures);
-        const nsSignatures =  ([] as io.ISignaturable[]).concat(...this.subnamespaces.map(ns => ns.getSignatures()));    
-        signaturables.push(...nsSignatures);
-        signaturables.push(...this.functions.map(func => func.getSignature()));
-        
-        return signaturables;
     }
 
     readonly name:string;

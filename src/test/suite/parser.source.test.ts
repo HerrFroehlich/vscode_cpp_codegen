@@ -30,13 +30,13 @@ suite('Parser Source Files Tests', () => {
         const argWithoutSpaces = `${arg}`.replace(/\s/g,'');
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:[], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:[], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:[], signature:`fncName2(${argWithoutSpaces})const`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:[], signature:`fncName2(${argWithoutSpaces})const`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:[], signature:`fncName3(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:[], signature:`fncName3(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         done();
     });});
 
@@ -61,13 +61,13 @@ suite('Parser Source Files Tests', () => {
         const argWithoutSpaces = `${arg}`.replace(/\s/g,'');
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["TestClass"], signature:`fncName2(${argWithoutSpaces})const`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["TestClass"], signature:`fncName2(${argWithoutSpaces})const`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["TestClass"], signature:`fncName3(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["TestClass"], signature:`fncName3(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         done();
     });});
 
@@ -111,13 +111,13 @@ suite('Parser Source Files Tests', () => {
         const argWithoutSpaces = `${arg}`.replace(/\s/g,'');
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespace", "TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespace", "TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespace"], signature:`standAloneFnc(${argWithoutSpaces})const`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespace"], signature:`standAloneFnc(${argWithoutSpaces})const`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespace", "namespace2", "TestClass"], signature:`fncName2(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespace", "namespace2", "TestClass"], signature:`fncName2(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         done();
     });});
 
@@ -147,13 +147,13 @@ suite('Parser Source Files Tests', () => {
         const argWithoutSpaces = `${arg}`.replace(/\s/g,'');
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespaceName", "TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespaceName", "TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespaceName"], signature:`standAloneFnc(${argWithoutSpaces})const`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespaceName"], signature:`standAloneFnc(${argWithoutSpaces})const`, textScope: new TextScope(0,0), content:"" })).length, 1);
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespaceName", "namespaceName2", "TestClass"], signature:`fncName2(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespaceName", "namespaceName2", "TestClass"], signature:`fncName2(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         done();
     });});    
     
@@ -175,8 +175,7 @@ suite('Parser Source Files Tests', () => {
         const argWithoutSpaces = `${arg}`.replace(/\s/g,'');
         assert.strictEqual(
             signatures.filter(sig => compareSignaturables(sig,  
-                {namespaces:["namespaceName", "namespaceName2", "TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0) })).length, 1);
+                {namespaces:["namespaceName", "namespaceName2", "TestClass"], signature:`fncName(${argWithoutSpaces})`, textScope: new TextScope(0,0), content:"" })).length, 1);
         done();
     });});
-
 });
