@@ -41,7 +41,7 @@ export class NamespaceMatch {
 }
 
 class CommentMatch {
-    static readonly regexStr:string = "(\\/\\**[\\s\\S]*\\*\\/)|(\\/\\/.*)";
+    static readonly regexStr:string = "(\\/\\*[\\s\\S]*?\\*\\/)|(\\/\\/.*)";
 }
 
 export abstract class CommonParser {
