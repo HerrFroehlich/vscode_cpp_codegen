@@ -1,17 +1,14 @@
-import { TextScope, TextFragment, TextRegexMatch } from "./Text";
+import { TextScope, TextFragment } from "./Text";
+import { RemovingRegexMatcher, TextMatch } from "./Matcher";
 import { ISignaturable } from "./ISignaturable";
 import { NamespaceMatch, CommonParser, joinStringsWithWhiteSpace } from "./CommonParser";
 import { ISerializable, SerializableMode } from "./ISerial";
 class FunctionDefinitionMatch {
-    constructor(regexMatch:TextRegexMatch) {
-        if (regexMatch.groupMatches.length !== FunctionDefinitionMatch.nofGroupMatches) {
-            throw new Error("ParserError: Unexpected number of matches!");  
-        }
-
-        this.returnValMatch = regexMatch.groupMatches[0];
-        this.nameMatch = regexMatch.groupMatches[1];
-        this.argsMatch = regexMatch.groupMatches[2];
-        this.constMatch = regexMatch.groupMatches[3] ? regexMatch.groupMatches[3] : "";
+    constructor(regexMatch:TextMatch) {
+        this.returnValMatch = regexMatch.getGroupMatch(0);
+        this.nameMatch = regexMatch.getGroupMatch(1);
+        this.argsMatch = regexMatch.getGroupMatch(2);
+        this.constMatch = regexMatch.getGroupMatch(3);
     }
 
     private static readonly returnValRegex:string = '(\\b.+?)\\s';
@@ -21,7 +18,6 @@ class FunctionDefinitionMatch {
     private static readonly funcBodyRegex:string = '{[\\s\\S]*?}';
     static readonly regexStr:string = joinStringsWithWhiteSpace(FunctionDefinitionMatch.returnValRegex, FunctionDefinitionMatch.funcNameRegex,
          FunctionDefinitionMatch.funcArgsRegex, FunctionDefinitionMatch.mayHaveConstSpecifierRegex, FunctionDefinitionMatch.funcBodyRegex);
-    static readonly nofGroupMatches = 4;
 
     readonly returnValMatch:string;
     readonly nameMatch:string;
@@ -31,15 +27,10 @@ class FunctionDefinitionMatch {
 
 class ClassConstructorSignatureMatch {
 
-    constructor(regexMatch:TextRegexMatch) {
-        if (regexMatch.groupMatches.length !== ClassConstructorSignatureMatch.nofGroupMatches) {
-            throw new Error("ParserError: Unexpected number of matches!");  
-        }
-
-        this.classNameMatch = (regexMatch.groupMatches[0]) ? regexMatch.groupMatches[0] : "";
+    constructor(regexMatch:TextMatch) {
+        this.classNameMatch = regexMatch.getGroupMatch(0);
     }
 
-    static readonly nofGroupMatches = 1;
     private static readonly classNameRegex:string = '(\\S+)::\\1\\s*\\(\\s*\\)';
     
     private static readonly funcBodyRegex:string = '{[\\s\\S]*?}';
@@ -51,12 +42,8 @@ class ClassConstructorSignatureMatch {
 
 class ClassDestructorSignatureMatch {
 
-    constructor(regexMatch:TextRegexMatch) {
-        if (regexMatch.groupMatches.length !== ClassDestructorSignatureMatch.nofGroupMatches) {
-            throw new Error("ParserError: Unexpected number of matches!");  
-        }
-
-        this.classNameMatch = (regexMatch.groupMatches[0]) ? regexMatch.groupMatches[0] : "";
+    constructor(regexMatch:TextMatch) {
+        this.classNameMatch = regexMatch.getGroupMatch(0);
     }
 
     static readonly nofGroupMatches = 1;
@@ -99,8 +86,8 @@ export abstract class SourceParser extends CommonParser {
 
     private static parseSignaturesWithinNamespace(data:TextFragment): ISignaturable[] {
         const signatures:ISignaturable[] = [];
-
-        data.removeMatching(ClassDestructorSignatureMatch.regexStr).forEach(
+        let matcher = new RemovingRegexMatcher(ClassDestructorSignatureMatch.regexStr);
+        matcher.match(data).forEach(
             (regexMatch) => {           
                 const match = new ClassDestructorSignatureMatch(regexMatch);
                 const signature:ISignaturable = {
@@ -113,7 +100,8 @@ export abstract class SourceParser extends CommonParser {
             }
         );        
 
-        data.removeMatching(ClassConstructorSignatureMatch.regexStr).forEach(
+        matcher = new RemovingRegexMatcher(ClassConstructorSignatureMatch.regexStr);
+        matcher.match(data).forEach(
             (regexMatch) => {           
                 const match = new ClassConstructorSignatureMatch(regexMatch);
                 const signature:ISignaturable = {
@@ -126,7 +114,8 @@ export abstract class SourceParser extends CommonParser {
             }
         );
 
-        data.removeMatching(FunctionDefinitionMatch.regexStr).forEach(
+        matcher = new RemovingRegexMatcher(FunctionDefinitionMatch.regexStr);
+        matcher.match(data).forEach(
             (regexMatch) => {           
                 const match = new FunctionDefinitionMatch(regexMatch);
                 const funcDefinition:ISignaturable = {
@@ -146,12 +135,12 @@ export abstract class SourceParser extends CommonParser {
     }
     private static parseNamespaces(data:TextFragment): SourceFileNamespace[]  {
         let namespaces:SourceFileNamespace[] = [];
-
+        const matcher = new RemovingRegexMatcher(NamespaceMatch.regexStr);
         let matchesFound = true;
         while (matchesFound) {
             let newNamespaces: SourceFileNamespace[] = [];
             matchesFound = false;
-            data.removeMatching(NamespaceMatch.regexStr).forEach(
+            matcher.match(data).forEach(
                 (regexMatch) => {           
                     const match = new NamespaceMatch(regexMatch);
                     newNamespaces.push(new SourceFileNamespace(match.nameMatch, regexMatch as TextScope)); 
