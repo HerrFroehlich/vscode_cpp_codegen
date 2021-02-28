@@ -1,5 +1,6 @@
+import { isFunction, isObject } from "util";
 import { TextScope, TextFragment, TextBlock } from "./Text";
-const G2BracketParser = require("g2-bracket-parser");
+const g2BracketParser = require("g2-bracket-parser");
 
 class IndexStep {
     constructor(public readonly xstart:number,
@@ -88,7 +89,7 @@ class RegexMatch {
 
 
 export class TextMatch extends TextScope {
-    fullMatch:string;
+    readonly fullMatch:string;
 
     constructor(regexMatch:RegexMatch, fragment: TextFragment) {
         super(regexMatch.textScope.scopeStart, regexMatch.textScope.scopeEnd);
@@ -128,65 +129,73 @@ function mergeContent(textFragment: TextFragment):[string, IndexCalculatorHelper
     });
     return [mergedContent, indexHelper];
 }
+
+function matchContentGlobal(textFragment: TextFragment, regex:string, matchSingle:boolean = false):RegexMatch[] {
+    const regexMatches:RegexMatch[] = []; 
+    const regexMatcher = new RegExp(regex, 'g'); 
+    const [mergedContent, indexHelper] = mergeContent(textFragment);
+
+    let rawMatch:any; 
+    while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) 
+    {
+        if (rawMatch.index === regexMatcher.lastIndex) {
+            regexMatcher.lastIndex++;
+        }
+        regexMatches.push(RegexMatch.fromRegexExec(rawMatch, indexHelper));
+        if (matchSingle) {
+            break;
+        }
+    }
+
+    return regexMatches;
+}
+
+function matchContentGlobalInverse(textFragment: TextFragment, regex:string):RegexMatch[] {
+    const inverseRegexMatches:RegexMatch[] = []; 
+    const regexMatcher = new RegExp(regex, 'g'); 
+    const [mergedContent, indexHelper] = mergeContent(textFragment);
+    const regexMatchScopes: TextScope[] = [];
+
+    let rawMatch:any;
+    while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) 
+    {
+        if (rawMatch.index === regexMatcher.lastIndex) {
+            regexMatcher.lastIndex++;
+        }
+        regexMatchScopes.push (new TextScope(indexHelper.calc(rawMatch.index), indexHelper.calc(rawMatch.index + rawMatch[0].length-1)));
+    }
+
+    if (regexMatchScopes.length) {
+        textFragment.blocks.forEach(block => {
+            block.splice(...regexMatchScopes).forEach( newBlock =>
+            inverseRegexMatches.push(RegexMatch.fromTextBlock(newBlock)));
+        });
+    } else {
+
+        inverseRegexMatches.push(...Array.from(textFragment.blocks, block => RegexMatch.fromTextBlock(block)));
+    }
+
+    return inverseRegexMatches;
+}
+
 export interface IMatcher {
     match(textFragment:TextFragment):TextMatch[];
+}
+export interface IInverseMatcher {
     matchInverse(textFragment:TextFragment):TextMatch[];
 }
 
 
-export class RegexMatcher implements IMatcher {
+export class RegexMatcher implements IMatcher, IInverseMatcher {
     constructor (private readonly _regex:string) {}
 
-    private matchContentGlobal(textFragment: TextFragment):RegexMatch[] {
-        const regexMatches:RegexMatch[] = []; 
-        const regexMatcher = new RegExp(this._regex, 'g'); 
-        const [mergedContent, indexHelper] = mergeContent(textFragment);
 
-        let rawMatch:any; 
-        while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) 
-        {
-            if (rawMatch.index === regexMatcher.lastIndex) {
-                regexMatcher.lastIndex++;
-            }
-            regexMatches.push(RegexMatch.fromRegexExec(rawMatch, indexHelper));
-        }
-
-        return regexMatches;
-    }
-
-    private matchContentGlobalInverse(textFragment: TextFragment):RegexMatch[] {
-        const inverseRegexMatches:RegexMatch[] = []; 
-        const regexMatcher = new RegExp(this._regex, 'g'); 
-        const [mergedContent, indexHelper] = mergeContent(textFragment);
-        const regexMatchScopes: TextScope[] = [];
-
-        let rawMatch:any;
-        while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) 
-        {
-            if (rawMatch.index === regexMatcher.lastIndex) {
-                regexMatcher.lastIndex++;
-            }
-            regexMatchScopes.push (new TextScope(indexHelper.calc(rawMatch.index), indexHelper.calc(rawMatch.index + rawMatch[0].length-1)));
-        }
-
-        if (regexMatchScopes.length) {
-            textFragment.blocks.forEach(block => {
-                block.splice(...regexMatchScopes).forEach( newBlock =>
-                inverseRegexMatches.push(RegexMatch.fromTextBlock(newBlock)));
-            });
-        } else {
-
-            inverseRegexMatches.push(...Array.from(textFragment.blocks, block => RegexMatch.fromTextBlock(block)));
-        }
-
-        return inverseRegexMatches;
-    }
 
     match(textFragment: TextFragment): TextMatch[] {
         if (!textFragment.blocks.length) {
             return [];
         }
-        const regexMatches = this.matchContentGlobal(textFragment);
+        const regexMatches = matchContentGlobal(textFragment, this._regex);
         const matches:TextMatch[] = Array.from(regexMatches, regexMatch => new TextMatch(regexMatch, textFragment)); 
         return matches;
     }
@@ -195,13 +204,13 @@ export class RegexMatcher implements IMatcher {
         if (!textFragment.blocks.length) {
             return [];
         }
-        const regexMatches = this.matchContentGlobalInverse(textFragment);
+        const regexMatches = matchContentGlobalInverse(textFragment, this._regex);
         const matches:TextMatch[] = Array.from(regexMatches, regexMatch => new TextMatch(regexMatch, textFragment)); 
         return matches;
     }
 }
 
-export class RemovingRegexMatcher implements IMatcher {
+export class RemovingRegexMatcher implements IMatcher, IInverseMatcher {
     constructor (regex:string) {
         this._regexMatcher = new RegexMatcher(regex);
     }
@@ -226,25 +235,55 @@ export class RemovingRegexMatcher implements IMatcher {
 
     private readonly _regexMatcher:RegexMatcher;
 }
+export class RemovingRegexWithBodyMatcher implements IMatcher {
+    constructor (regex:string) {
+        this._regex = regex + "\\s*\{";
+    }
 
-export class BodyMatcher implements IMatcher {
-
-    match(textFragment: TextFragment): TextMatch[] {
+    private matchBody(textFragment: TextFragment): RegexMatch|null {
         const [mergedContent, indexHelper] = mergeContent(textFragment);
 
-        const bracketedContent = G2BracketParser(mergedContent, {onlyFirst: true, ignoreMissMatch: true})[0];
+        const bracketedContent = g2BracketParser(mergedContent, {onlyFirst: true, ignoreMissMatch: true})[0];
 
         if (!bracketedContent?.closed) {
+            return null;
+        }
+        return RegexMatch.fromArray([bracketedContent.content, bracketedContent.match.content],bracketedContent.start, indexHelper);
+    }
+
+    match(textFragment: TextFragment): TextMatch[] {
+        if (!textFragment.blocks.length) {
             return [];
         }
-        const match = RegexMatch.fromArray([bracketedContent.content, bracketedContent.match.content],bracketedContent.start, indexHelper);
+        
+        const matches:TextMatch[] = []; 
+        const fragmentEnd = Math.max(...Array.from(textFragment.blocks, block => block.scopeEnd));
+        let matchesFound = true;
+        let lastMatchEndIdx = 0;
 
-        return [new TextMatch(match, textFragment)];
+        while (matchesFound) {
+            const regexMatches = matchContentGlobal(textFragment.slice(new TextScope(lastMatchEndIdx, fragmentEnd)), this._regex, true);
+            if (regexMatches.length === 1) {
+                const bracketIdx = regexMatches[0].textScope.scopeEnd;
+                const bodyMatch = this.matchBody(textFragment.slice(new TextScope(bracketIdx, fragmentEnd)));
+                if (bodyMatch) {
+                    const newMatch = regexMatches[0];
+                    newMatch.textScope = new TextScope(regexMatches[0].textScope.scopeStart, bodyMatch.textScope.scopeEnd);
+                    newMatch.fullMatch = textFragment.slice(newMatch.textScope).toString();
+                    newMatch.groupMatches.push(...bodyMatch.groupMatches);
+                    matches.push(new TextMatch(newMatch, textFragment));
+                    lastMatchEndIdx =  newMatch.textScope.scopeEnd;
+                } else {
+                    matchesFound = false;
+                }
+            } else {
+                matchesFound = false;
+            }
+        }
+
+        textFragment.remove(...matches);
+        return matches;
     }
 
-    //TODO implement
-    matchInverse(textFragment: TextFragment): TextMatch[] {
-        throw new Error("Method not implemented.");
-    }
-    
+    private readonly _regex:string;
 }

@@ -185,23 +185,25 @@ suite('Matcher Tests', () => {
 		done();
 	});
 
-	test('Body matcher: find first bracketed content', (done) => {
-		const testContent = "{{}}{}";
+	test('RemovingRegexWithBodyMatcher: find first bracketed content and removes it', (done) => {
+		const testContent = "a{{}}{}";
 		const textFragment = io.TextFragment.createFromString(testContent);
-		const matcher = new io.BodyMatcher();
+		const matcher = new io.RemovingRegexWithBodyMatcher('a');
 
 		const matches = matcher.match(textFragment);
 		assert.strictEqual(matches.length,1);
-		assert.strictEqual(matches[0].fullMatch, "{{}}");
+		assert.strictEqual(matches[0].fullMatch, "a{{}}");
 		assert.strictEqual(matches[0].scopeStart, 0);
-		assert.strictEqual(matches[0].scopeEnd, 3);
+		assert.strictEqual(matches[0].scopeEnd, 4);
+		
+		assert.strictEqual(textFragment.toString(), "{}");
 		done();
 	});
 
-	test('Body matcher: bracketed content as group match', (done) => {
-		const testContent = "{abc}";
+	test('RemovingRegexWithBodyMatcher: bracketed content as group match', (done) => {
+		const testContent = "a{abc}";
 		const textFragment = io.TextFragment.createFromString(testContent);
-		const matcher = new io.BodyMatcher();
+		const matcher = new io.RemovingRegexWithBodyMatcher('a');
 
 		const matches = matcher.match(textFragment);
 		assert.strictEqual(matches.length,1);
@@ -209,17 +211,17 @@ suite('Matcher Tests', () => {
 
 		const groupMatchFrag = matches[0].getGroupMatchFragment(0);
 		assert.strictEqual(groupMatchFrag.blocks.length,1);
-		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 1);
-		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 3);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 2);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 4);
 		done();
 	});
 
-	test('Body matcher: fragmented group match', (done) => {
-		const testContent1 = "{a";
+	test('RemovingRegexWithBodyMatcher: fragmented group match', (done) => {
+		const testContent1 = "a{a";
 		const testContent2 = "bc}";
 		const textFragment = io.TextFragment.createEmpty();
 		textFragment.push(new io.TextBlock(testContent1), new io.TextBlock(testContent2, testContent1.length));
-		const matcher = new io.BodyMatcher();
+		const matcher = new io.RemovingRegexWithBodyMatcher('a');
 
 		const matches = matcher.match(textFragment);
 		assert.strictEqual(matches.length,1);
@@ -227,30 +229,82 @@ suite('Matcher Tests', () => {
 		
 		const groupMatchFrag = matches[0].getGroupMatchFragment(0);
 		assert.strictEqual(groupMatchFrag.blocks.length,2);
-		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 1);
-		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 1);
-		assert.strictEqual(groupMatchFrag.blocks[1].scopeStart, 2);
-		assert.strictEqual(groupMatchFrag.blocks[1].scopeEnd, 3);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 2);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 2);
+		assert.strictEqual(groupMatchFrag.blocks[1].scopeStart, 3);
+		assert.strictEqual(groupMatchFrag.blocks[1].scopeEnd, 4);
 		done();
 	});
 
-	test('Body matcher: return empty if no bracketed content', (done) => {
+	test('RemovingRegexWithBodyMatcher: return empty if no bracketed content', (done) => {
 		const testContent = "testing";
 		const textFragment = io.TextFragment.createFromString(testContent);
-		const matcher = new io.BodyMatcher();
+		const matcher = new io.RemovingRegexWithBodyMatcher('a');
 
 		const matches = matcher.match(textFragment);
 		assert.strictEqual(matches.length,0);
 		done();
 	});
 
-	test('Body matcher: return empty if wrongly bracketed content', (done) => {
-		const testContent = "{{}";
+	test('RemovingRegexWithBodyMatcher: return empty if wrongly bracketed content', (done) => {
+		const testContent = "a{{}";
 		const textFragment = io.TextFragment.createFromString(testContent);
-		const matcher = new io.BodyMatcher();
+		const matcher = new io.RemovingRegexWithBodyMatcher('a');
 
 		const matches = matcher.match(textFragment);
 		assert.strictEqual(matches.length,0);
+		done();
+	});
+
+	test('RemovingRegexWithBodyMatcher: regex group matches', (done) => {
+		const testContent = "ab{abc}";
+		const textFragment = io.TextFragment.createFromString(testContent);
+		const matcher = new io.RemovingRegexWithBodyMatcher('(a)(b)');
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].getGroupMatch(0), "a");
+		assert.strictEqual(matches[0].getGroupMatch(1), "b");
+		assert.strictEqual(matches[0].getGroupMatch(2), "abc");
+
+		let groupMatchFrag = matches[0].getGroupMatchFragment(0);
+		assert.strictEqual(groupMatchFrag.blocks.length,1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 0);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 0);
+		groupMatchFrag = matches[0].getGroupMatchFragment(1);
+		assert.strictEqual(groupMatchFrag.blocks.length,1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 1);
+		groupMatchFrag = matches[0].getGroupMatchFragment(2);
+		assert.strictEqual(groupMatchFrag.blocks.length,1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 3);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 5);
+		done();
+	});
+
+	test('RemovingRegexWithBodyMatcher: multiple matches', (done) => {
+		const nRep = 20;
+		const testBase = "ab{abc}HELLO";
+		let testContent = "";
+		let remainingContent = "";
+		for (let cnt = 0; cnt < nRep; cnt++) {
+			testContent += testBase;
+			remainingContent += "HELLO";
+		}
+		const textFragment = io.TextFragment.createFromString(testContent);
+		const matcher = new io.RemovingRegexWithBodyMatcher('(a)(b)');
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length, nRep);
+		matches.forEach((match, idx) => {
+			assert.strictEqual(match.getGroupMatch(0), "a");
+			assert.strictEqual(match.getGroupMatch(1), "b");
+			assert.strictEqual(match.getGroupMatch(2), "abc");
+			assert.strictEqual(match.scopeStart, testBase.length*idx);
+			assert.strictEqual(match.scopeEnd, 6+testBase.length*idx);
+		});
+		assert.strictEqual(textFragment.toString(), remainingContent);
+
 		done();
 	});
 });
