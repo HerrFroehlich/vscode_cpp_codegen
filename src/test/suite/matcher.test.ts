@@ -158,7 +158,7 @@ suite('Matcher Tests', () => {
 		done();
 	});
 
-	test('TexRegexMatch return correct group matches', (done) => {
+	test('TextFragment: RemovingRegexMatcher return correct group matches', (done) => {
 		const testContent = "This is a test message";
 		const regex = "(test) (message)(too)?";
 		const textFragment = io.TextFragment.createFromString(testContent);
@@ -182,6 +182,75 @@ suite('Matcher Tests', () => {
 		}
 		assert.strictEqual(matches[0].getGroupMatchFragment(2).blocks.length, 0);
 
+		done();
+	});
+
+	test('Body matcher: find first bracketed content', (done) => {
+		const testContent = "{{}}{}";
+		const textFragment = io.TextFragment.createFromString(testContent);
+		const matcher = new io.BodyMatcher();
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].fullMatch, "{{}}");
+		assert.strictEqual(matches[0].scopeStart, 0);
+		assert.strictEqual(matches[0].scopeEnd, 3);
+		done();
+	});
+
+	test('Body matcher: bracketed content as group match', (done) => {
+		const testContent = "{abc}";
+		const textFragment = io.TextFragment.createFromString(testContent);
+		const matcher = new io.BodyMatcher();
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].getGroupMatch(0), "abc");
+
+		const groupMatchFrag = matches[0].getGroupMatchFragment(0);
+		assert.strictEqual(groupMatchFrag.blocks.length,1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 3);
+		done();
+	});
+
+	test('Body matcher: fragmented group match', (done) => {
+		const testContent1 = "{a";
+		const testContent2 = "bc}";
+		const textFragment = io.TextFragment.createEmpty();
+		textFragment.push(new io.TextBlock(testContent1), new io.TextBlock(testContent2, testContent1.length));
+		const matcher = new io.BodyMatcher();
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length,1);
+		assert.strictEqual(matches[0].getGroupMatch(0), "abc");
+		
+		const groupMatchFrag = matches[0].getGroupMatchFragment(0);
+		assert.strictEqual(groupMatchFrag.blocks.length,2);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeStart, 1);
+		assert.strictEqual(groupMatchFrag.blocks[0].scopeEnd, 1);
+		assert.strictEqual(groupMatchFrag.blocks[1].scopeStart, 2);
+		assert.strictEqual(groupMatchFrag.blocks[1].scopeEnd, 3);
+		done();
+	});
+
+	test('Body matcher: return empty if no bracketed content', (done) => {
+		const testContent = "testing";
+		const textFragment = io.TextFragment.createFromString(testContent);
+		const matcher = new io.BodyMatcher();
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length,0);
+		done();
+	});
+
+	test('Body matcher: return empty if wrongly bracketed content', (done) => {
+		const testContent = "{{}";
+		const textFragment = io.TextFragment.createFromString(testContent);
+		const matcher = new io.BodyMatcher();
+
+		const matches = matcher.match(textFragment);
+		assert.strictEqual(matches.length,0);
 		done();
 	});
 });

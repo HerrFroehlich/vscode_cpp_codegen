@@ -1,5 +1,5 @@
-import { group } from "console";
 import { TextScope, TextFragment, TextBlock } from "./Text";
+const G2BracketParser = require("g2-bracket-parser");
 
 class IndexStep {
     constructor(public readonly xstart:number,
@@ -60,6 +60,10 @@ class RegexMatch {
 
     static fromRegexExec(execMatch:RegExpExecArray, indexHelper:IndexCalculatorHelper = new IndexCalculatorHelperDummy) {
         return new RegexMatch(execMatch, execMatch.index, indexHelper);
+    } 
+    
+    static fromArray(array:Array<string>, offset: number,indexHelper:IndexCalculatorHelper = new IndexCalculatorHelperDummy) {
+        return new RegexMatch(array, offset, indexHelper);
     }    
     
     static fromTextBlock(textBlock:TextBlock, indexHelper:IndexCalculatorHelper = new IndexCalculatorHelperDummy) {
@@ -114,7 +118,16 @@ export class TextMatch extends TextScope {
     private _groupMatchTextFragments:Map<number, TextFragment>;
 }
 
-
+function mergeContent(textFragment: TextFragment):[string, IndexCalculatorHelper] {
+    let mergedContent = "";
+    const indexHelper = new IndexCalculatorHelper;
+    textFragment.blocks.forEach(
+        (block) => {
+            indexHelper.addStep(new IndexStep(mergedContent.length, mergedContent.length+block.content.length-1, block.scopeStart));
+            mergedContent += block.content;
+    });
+    return [mergedContent, indexHelper];
+}
 export interface IMatcher {
     match(textFragment:TextFragment):TextMatch[];
     matchInverse(textFragment:TextFragment):TextMatch[];
@@ -124,21 +137,10 @@ export interface IMatcher {
 export class RegexMatcher implements IMatcher {
     constructor (private readonly _regex:string) {}
 
-    private mergeContent(textFragment: TextFragment):[string, IndexCalculatorHelper] {
-        let mergedContent = "";
-        const indexHelper = new IndexCalculatorHelper;
-        textFragment.blocks.forEach(
-            (block) => {
-                indexHelper.addStep(new IndexStep(mergedContent.length, mergedContent.length+block.content.length-1, block.scopeStart));
-                mergedContent += block.content;
-        });
-        return [mergedContent, indexHelper];
-    }
-
     private matchContentGlobal(textFragment: TextFragment):RegexMatch[] {
         const regexMatches:RegexMatch[] = []; 
         const regexMatcher = new RegExp(this._regex, 'g'); 
-        const [mergedContent, indexHelper] = this.mergeContent(textFragment);
+        const [mergedContent, indexHelper] = mergeContent(textFragment);
 
         let rawMatch:any; 
         while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) 
@@ -155,7 +157,7 @@ export class RegexMatcher implements IMatcher {
     private matchContentGlobalInverse(textFragment: TextFragment):RegexMatch[] {
         const inverseRegexMatches:RegexMatch[] = []; 
         const regexMatcher = new RegExp(this._regex, 'g'); 
-        const [mergedContent, indexHelper] = this.mergeContent(textFragment);
+        const [mergedContent, indexHelper] = mergeContent(textFragment);
         const regexMatchScopes: TextScope[] = [];
 
         let rawMatch:any;
@@ -223,4 +225,26 @@ export class RemovingRegexMatcher implements IMatcher {
     }
 
     private readonly _regexMatcher:RegexMatcher;
+}
+
+export class BodyMatcher implements IMatcher {
+
+    match(textFragment: TextFragment): TextMatch[] {
+        const [mergedContent, indexHelper] = mergeContent(textFragment);
+
+        const bracketedContent = G2BracketParser(mergedContent, {onlyFirst: true, ignoreMissMatch: true})[0];
+
+        if (!bracketedContent?.closed) {
+            return [];
+        }
+        const match = RegexMatch.fromArray([bracketedContent.content, bracketedContent.match.content],bracketedContent.start, indexHelper);
+
+        return [new TextMatch(match, textFragment)];
+    }
+
+    //TODO implement
+    matchInverse(textFragment: TextFragment): TextMatch[] {
+        throw new Error("Method not implemented.");
+    }
+    
 }

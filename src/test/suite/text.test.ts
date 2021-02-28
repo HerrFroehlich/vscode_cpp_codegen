@@ -136,7 +136,6 @@ suite('Text Utility Tests', () => {
 		done();
 	});
 
-
 	test('TextFragment slice single', (done) => {
 		const testContent1 = "Hello";
 		const testContent2 = "World";
