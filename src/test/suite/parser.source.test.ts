@@ -40,6 +40,25 @@ suite('Parser Source Files Tests', () => {
         done();
     });});
 
+    describe('ParseStandaloneSingleSignatureWithBody', function() {
+		callItAsync("With function arguments ${value}", argData, async function (done:Done, arg:string) {
+        const testStr = `int fncName(${arg}) {
+            if (working) {
+            }}`
+        const testData = TextFragment.createFromString(testStr);
+        const signatures = SourceParser.parseSignatures(testData);
+        assert.strictEqual(signatures.length, 1);
+
+        const argWithoutSpaces = `${arg}`.replace(/\s/g,'');
+
+        assert.strictEqual(signatures[0].signature, `fncName(${argWithoutSpaces})`);
+        assert.deepStrictEqual(signatures[0].namespaces, []);
+        assert.strictEqual(signatures[0].textScope.scopeStart, 0);
+        assert.strictEqual(signatures[0].textScope.scopeEnd, testStr.length-1);
+        assert.strictEqual(signatures[0].content, testStr);
+        done();
+    });});
+
     describe('ParseMemberFunctionSignature', function() {
 		callItAsync("With function arguments ${value}", argData, async function (done:Done, arg:string) {
         const testData = TextFragment.createFromString( 

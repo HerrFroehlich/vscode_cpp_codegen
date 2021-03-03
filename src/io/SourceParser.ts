@@ -1,5 +1,5 @@
 import { TextScope, TextFragment } from "./Text";
-import { RemovingRegexMatcher, TextMatch } from "./Matcher";
+import { RemovingRegexMatcher, RemovingRegexWithBodyMatcher, TextMatch } from "./Matcher";
 import { ISignaturable } from "./ISignaturable";
 import { NamespaceMatch, CommonParser, joinStringsWithWhiteSpace } from "./CommonParser";
 import { ISerializable, SerializableMode } from "./ISerial";
@@ -15,9 +15,8 @@ class FunctionDefinitionMatch {
     private static readonly funcNameRegex:string = '(\\S+)';
     private static readonly funcArgsRegex:string = '\\(((?:(?!\\()[\\s\\S])*?)\\)';
     private static readonly mayHaveConstSpecifierRegex:string = '(const)?';
-    private static readonly funcBodyRegex:string = '{[\\s\\S]*?}';
     static readonly regexStr:string = joinStringsWithWhiteSpace(FunctionDefinitionMatch.returnValRegex, FunctionDefinitionMatch.funcNameRegex,
-         FunctionDefinitionMatch.funcArgsRegex, FunctionDefinitionMatch.mayHaveConstSpecifierRegex, FunctionDefinitionMatch.funcBodyRegex);
+         FunctionDefinitionMatch.funcArgsRegex, FunctionDefinitionMatch.mayHaveConstSpecifierRegex);
 
     readonly returnValMatch:string;
     readonly nameMatch:string;
@@ -86,7 +85,7 @@ export abstract class SourceParser extends CommonParser {
 
     private static parseSignaturesWithinNamespace(data:TextFragment): ISignaturable[] {
         const signatures:ISignaturable[] = [];
-        let matcher = new RemovingRegexMatcher(ClassDestructorSignatureMatch.regexStr);
+        let matcher = new RemovingRegexWithBodyMatcher(ClassDestructorSignatureMatch.regexStr);
         matcher.match(data).forEach(
             (regexMatch) => {           
                 const match = new ClassDestructorSignatureMatch(regexMatch);
@@ -100,7 +99,7 @@ export abstract class SourceParser extends CommonParser {
             }
         );        
 
-        matcher = new RemovingRegexMatcher(ClassConstructorSignatureMatch.regexStr);
+        matcher = new RemovingRegexWithBodyMatcher(ClassConstructorSignatureMatch.regexStr);
         matcher.match(data).forEach(
             (regexMatch) => {           
                 const match = new ClassConstructorSignatureMatch(regexMatch);
@@ -114,7 +113,7 @@ export abstract class SourceParser extends CommonParser {
             }
         );
 
-        matcher = new RemovingRegexMatcher(FunctionDefinitionMatch.regexStr);
+        matcher = new RemovingRegexWithBodyMatcher(FunctionDefinitionMatch.regexStr);
         matcher.match(data).forEach(
             (regexMatch) => {           
                 const match = new FunctionDefinitionMatch(regexMatch);
