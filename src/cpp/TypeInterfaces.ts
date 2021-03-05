@@ -34,7 +34,6 @@ export interface IClass extends io.ISerializable, io.IDeserializable, io.TextSco
 }
 
 export interface INamespace extends io.ISerializable, io.IDeserializable, io.TextScope {
-    tryAddNestedNamespace(possibleNestedClass: INamespace):boolean;
     readonly name:string;
     readonly classes:IClass[]; 
     readonly functions:IFunction[];

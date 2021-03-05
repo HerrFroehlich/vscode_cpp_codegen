@@ -23,11 +23,8 @@ export class NamespaceMatch {
 
     private static readonly namespaceSpecifierRegex: string = "namespace\\s";
     private static readonly namespaceNameRegex: string = "([\\S]+)";
-    private static readonly noNestedNamespaceRegex: string = "(?!"+NamespaceMatch.namespaceSpecifierRegex+"\\s*[\\S]+\\s*{)";
-    private static readonly namespaceBodyRegex: string = "{((?:"+NamespaceMatch.noNestedNamespaceRegex+"[\\s\\S])*?)}(?![\\s]*;)";
     
-    static readonly regexStr: string = joinStringsWithWhiteSpace(
-        NamespaceMatch.namespaceSpecifierRegex, NamespaceMatch.namespaceNameRegex, NamespaceMatch.namespaceBodyRegex);
+    static readonly regexStr: string = joinStringsWithWhiteSpace(NamespaceMatch.namespaceSpecifierRegex, NamespaceMatch.namespaceNameRegex);
 
     readonly nameMatch:string;
     readonly bodyMatch:io.TextFragment;

@@ -60,30 +60,30 @@ class SourceFileNamespace extends TextScope {
         super(scope.scopeStart, scope.scopeEnd);
     };
 
-    tryAddNameToSignature(signature:ISignaturable): boolean {
-        if (!this.fullyContains(signature.textScope)) {
-            return false;
-        } {
-            this.subnamespaces.every(subnamespace => !subnamespace.tryAddNameToSignature(signature));
-            signature.namespaces.unshift(this.name);
-        }
-        return true;
+    deserialize(data:TextFragment): void {
+        this._subnamespaces.push(...SourceParser.parseNamespaces(data));
+        this._signatures.push(... SourceParser.parseSignaturesWithinNamespace(data));
     }
 
-    subnamespaces: SourceFileNamespace[] = [];
+    getSignatures(): ISignaturable[] {
+        const signatures =  ([] as ISignaturable[]).concat(...this._subnamespaces.map(ns => ns.getSignatures()));    
+        signatures.push(...this._signatures);
+        signatures.forEach(signature => signature.namespaces.unshift(this.name));
+        return signatures;
+    }
+
+    private  _subnamespaces: SourceFileNamespace[] = [];
+    private _signatures:ISignaturable[] = [];
 }
 export abstract class SourceParser extends CommonParser {
     static parseSignatures(data:TextFragment): ISignaturable[] {
-        const signatures:ISignaturable[] = SourceParser.parseSignaturesWithinNamespace(data);
-    
         const namespaces = this.parseNamespaces(data);
-        signatures.forEach(signature => 
-            namespaces.every(namespace => namespace.tryAddNameToSignature(signature)));
-
+        const signatures = ([] as ISignaturable[]).concat(...namespaces.map(ns => ns.getSignatures()));
+        signatures.push(...SourceParser.parseSignaturesWithinNamespace(data));
         return signatures;
     }    
 
-    private static parseSignaturesWithinNamespace(data:TextFragment): ISignaturable[] {
+    static parseSignaturesWithinNamespace(data:TextFragment): ISignaturable[] {
         const signatures:ISignaturable[] = [];
         let matcher = new RemovingRegexWithBodyMatcher(ClassDestructorSignatureMatch.regexStr);
         matcher.match(data).forEach(
@@ -132,38 +132,18 @@ export abstract class SourceParser extends CommonParser {
         );
         return signatures;
     }
-    private static parseNamespaces(data:TextFragment): SourceFileNamespace[]  {
+
+    static parseNamespaces(data:TextFragment): SourceFileNamespace[]  {
         let namespaces:SourceFileNamespace[] = [];
-        const matcher = new RemovingRegexMatcher(NamespaceMatch.regexStr);
-        let matchesFound = true;
-        while (matchesFound) {
-            let newNamespaces: SourceFileNamespace[] = [];
-            matchesFound = false;
-            matcher.match(data).forEach(
-                (regexMatch) => {           
-                    const match = new NamespaceMatch(regexMatch);
-                    newNamespaces.push(new SourceFileNamespace(match.nameMatch, regexMatch as TextScope)); 
-                    matchesFound = true;
-                }
-            );
-            
-            if (matchesFound) {
-                newNamespaces.forEach(
-                    (newNamespace) => {
-                        namespaces.every ((possibleNestedNamespace, index) => 
-                            {
-                                if (newNamespace.fullyContains(possibleNestedNamespace)) {
-                                    newNamespace.subnamespaces.push(possibleNestedNamespace);
-                                    namespaces.splice(index,1);
-                                    return false;
-                                }
-                                return true;
-                            });
-                        namespaces.push(newNamespace);
-                    }
-                );
+        const matcher = new RemovingRegexWithBodyMatcher(NamespaceMatch.regexStr);
+        matcher.match(data).forEach(
+            (regexMatch) => {           
+                const match = new NamespaceMatch(regexMatch);
+                const newNamespace = new SourceFileNamespace(match.nameMatch, regexMatch as TextScope);
+                newNamespace.deserialize(match.bodyMatch);
+                namespaces.push(newNamespace); 
             }
-        }
+        );
 
         return namespaces;
     }    

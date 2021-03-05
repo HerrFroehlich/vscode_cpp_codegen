@@ -230,36 +230,15 @@ export abstract class HeaderParser extends CommonParser {
 
     static parseNamespaces(data:io.TextFragment, nameInputProvider?: INameInputProvider): cpp.INamespace[]  {
         let namespaces:cpp.INamespace[] = [];
-        const matcher = new io.RemovingRegexMatcher(NamespaceMatch.regexStr);
-
-        let matchesFound = true;
-        while (matchesFound) {
-            let newNamespaces: cpp.INamespace[] = [];
-            matchesFound = false;
-             matcher.match(data).forEach(
-                (regexMatch) => {           
-                    const match = new NamespaceMatch(regexMatch);
-                    const newNamespace = new cpp.Namespace(match.nameMatch, regexMatch, nameInputProvider);
-                    newNamespace.deserialize(match.bodyMatch);
-                    newNamespaces.push(newNamespace); 
-                    matchesFound = true;
-                }
-            );
-            
-            if (matchesFound) {
-                newNamespaces.forEach(
-                    (newNamespace) => {
-                        for (let index = namespaces.length-1; index >= 0 ; index--) {
-                            const possibleNestedNamespace = namespaces[index];
-                            if (newNamespace.tryAddNestedNamespace(possibleNestedNamespace)) {
-                                namespaces.splice(index,1);
-                            }
-                        }
-                        namespaces.push(newNamespace);
-                    }
-                );
+        const matcher = new io.RemovingRegexWithBodyMatcher(NamespaceMatch.regexStr);            
+        matcher.match(data).forEach(
+            (regexMatch) => {           
+                const match = new NamespaceMatch(regexMatch);
+                const newNamespace = new cpp.Namespace(match.nameMatch, regexMatch, nameInputProvider);
+                newNamespace.deserialize(match.bodyMatch);
+                namespaces.push(newNamespace); 
             }
-        }
+        );
 
         return namespaces;
     }    

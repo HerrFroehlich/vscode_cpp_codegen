@@ -143,13 +143,13 @@ suite('Parser Namespace Tests', () => {
 			assert.strictEqual(namespaces[0].functions.length, 0);
 
 			let namespace2 = namespaces[0].subnamespaces[0];
-			assert.strictEqual(namespace2.name,"namespaceName3");
+			assert.strictEqual(namespace2.name,"namespaceName2");
 			assert.strictEqual(namespace2.classes.length, data.nClasses);
 			assert.strictEqual(namespace2.subnamespaces.length, 0);
 			assert.strictEqual(namespace2.functions.length, data.nFunc);
 
 			let namespace3 = namespaces[0].subnamespaces[1];
-			assert.strictEqual(namespace3.name,"namespaceName2");
+			assert.strictEqual(namespace3.name,"namespaceName3");
 			assert.strictEqual(namespace3.classes.length, data.nClasses);
 			assert.strictEqual(namespace3.subnamespaces.length, 0);
 			assert.strictEqual(namespace3.functions.length, data.nFunc);
