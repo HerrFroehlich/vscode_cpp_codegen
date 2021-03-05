@@ -101,27 +101,6 @@ suite('Parser GeneralClasses Tests', () => {
 		done();
 	});
 
-	describe('ParseInheritance', function() {
-		callItAsync("With inheritance ${value}", inheritData, function (done:Done, inheritData:TestData) {
-		const testContent = TextFragment.createFromString(
-		`class MyClass ${inheritData.content}  {  // The class
-		  };
-		`
-		);
-		let classes:IClass[] = HeaderParser.parseClasses(testContent);
-
-		assert.strictEqual(classes.length,1);
-		assert.strictEqual(classes[0].name,"MyClass");
-		assertClassScopeEmpty(classes[0].publicScope);
-		assertClassScopeEmpty(classes[0].privateScope);
-		assertClassScopeEmpty(classes[0].protectedScope);
-		assert.strictEqual(classes[0].destructor,undefined);
-		assert.strictEqual(classes[0].inheritance.length,inheritData.nDates);
-
-		done();
-		});
-	});
-
 	test('ParseMultipleClassesWithoutMemberFunctions', (done) => {
 		const testContent = TextFragment.createFromString(
 		`class MyClass1 {       // The class
@@ -413,5 +392,48 @@ suite('Parser GeneralClasses Tests', () => {
 		assert.strictEqual(classes[0].destructor?.virtual, true);
 
 		done();		
+	});
+
+		describe('ParseInheritance', function() {
+		callItAsync("With inheritance ${value}", inheritData, function (done:Done, inheritData:TestData) {
+		const testContent = TextFragment.createFromString(
+		`class MyClass ${inheritData.content}  {  // The class
+		  };
+		`
+		);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
+
+		assert.strictEqual(classes.length,1);
+		assert.strictEqual(classes[0].name,"MyClass");
+		assertClassScopeEmpty(classes[0].publicScope);
+		assertClassScopeEmpty(classes[0].privateScope);
+		assertClassScopeEmpty(classes[0].protectedScope);
+		assert.strictEqual(classes[0].destructor,undefined);
+		assert.strictEqual(classes[0].inheritance.length,inheritData.nDates);
+
+		done();
+		});
+	});
+
+	describe('ParseInheritanceWithMemberFunctionWithInitializerList', function() {
+		callItAsync("With inheritance ${value}", inheritData, function (done:Done, inheritData:TestData) {
+		const testContent = TextFragment.createFromString(
+		`class MyClass ${inheritData.content}  {  // The class
+			void function(int x = {});
+		  };
+		`
+		);
+		let classes:IClass[] = HeaderParser.parseClasses(testContent);
+
+		assert.strictEqual(classes.length,1);
+		assert.strictEqual(classes[0].name,"MyClass");
+		assertClassScopeEmpty(classes[0].publicScope);
+		assert.strictEqual(classes[0].privateScope.memberFunctions.length,1);
+		assertClassScopeEmpty(classes[0].protectedScope);
+		assert.strictEqual(classes[0].destructor,undefined);
+		assert.strictEqual(classes[0].inheritance.length,inheritData.nDates);
+
+		done();
+		});
 	});
 });

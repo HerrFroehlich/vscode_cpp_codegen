@@ -34,7 +34,7 @@ class ClassMatch {
 
     private static readonly classSpecifierRegex: string = "class\\s";
     private static readonly classNameRegex: string = "([\\S]+)";
-    private static readonly inheritanceRegex: string = "(?::\\s*([\\S\\s]+))?";
+    private static readonly inheritanceRegex: string = "(?::\\s*((?:(?!{)[\\S\\s])+))?";
     private static readonly noNestedClassRegex: string = "(?!"+ClassMatch.classSpecifierRegex+"\\s*[\\S]+\\s*{)";
     private static readonly classBodyRegex: string = "{((?:"+ClassMatch.noNestedClassRegex+"[\\s\\S])*?)}";
     private static readonly classEndRegex: string = ";";
