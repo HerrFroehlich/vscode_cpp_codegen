@@ -317,6 +317,9 @@ suite("Matcher Tests", () => {
       assert.strictEqual(match.getGroupMatch(0), "a");
       assert.strictEqual(match.getGroupMatch(1), "b");
       assert.strictEqual(match.getGroupMatch(2), "abc");
+      assert.strictEqual(match.getGroupMatchFragment(0).toString(), "a");
+      assert.strictEqual(match.getGroupMatchFragment(1).toString(), "b");
+      assert.strictEqual(match.getGroupMatchFragment(2).toString(), "abc");
       assert.strictEqual(match.scopeStart, testBase.length * idx);
       assert.strictEqual(match.scopeEnd, 6 + testBase.length * idx);
     });

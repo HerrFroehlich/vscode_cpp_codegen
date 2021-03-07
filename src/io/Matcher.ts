@@ -93,7 +93,7 @@ class RegexMatch {
       indexHelper.calc(offset),
       indexHelper.calc(offset + matches[0].length - 1)
     );
-    this.groupMatches = Array.from(matches.slice(1), (groupMatch) => {
+    this.groupMatches = matches.slice(1).map((groupMatch) => {
       if (!groupMatch) {
         return undefined;
       }
@@ -111,22 +111,38 @@ class RegexMatch {
 export class TextMatch extends TextScope {
   readonly fullMatch: string;
 
-  constructor(regexMatch: RegexMatch, fragment: TextFragment) {
-    super(regexMatch.textScope.scopeStart, regexMatch.textScope.scopeEnd);
-    this.fullMatch = regexMatch.fullMatch;
-    this._groupMatches = new Map<number, string>();
-    this._groupMatchTextFragments = new Map<number, TextFragment>();
+  static createFromRegexMatch(regexMatch: RegexMatch, fragment: TextFragment) {
+    const groupMatches = new Map<number, string>();
+    const groupMatchTextFragments = new Map<number, TextFragment>();
     regexMatch.groupMatches.forEach((groupMatch, index) => {
       if (!groupMatch) {
         return;
       }
 
-      this._groupMatches.set(index, groupMatch.match);
-      this._groupMatchTextFragments.set(
-        index,
-        fragment.slice(groupMatch.textScope)
-      );
+      groupMatches.set(index, groupMatch.match);
+      groupMatchTextFragments.set(index, fragment.slice(groupMatch.textScope));
     });
+    return new TextMatch(
+      regexMatch.fullMatch,
+      regexMatch.textScope,
+      groupMatches,
+      groupMatchTextFragments,
+      regexMatch.groupMatches.length
+    );
+  }
+
+  constructor(
+    fullMatch: string,
+    textScope: TextScope,
+    groupMatches: Map<number, string>,
+    groupMatchTextFragments: Map<number, TextFragment>,
+    nMaxGroupMatches: number
+  ) {
+    super(textScope.scopeStart, textScope.scopeEnd);
+    this.fullMatch = fullMatch;
+    this._groupMatches = groupMatches;
+    this._groupMatchTextFragments = groupMatchTextFragments;
+    this._nMaxgroupMatches = nMaxGroupMatches;
   }
 
   getGroupMatch(index: number): string {
@@ -141,8 +157,49 @@ export class TextMatch extends TextScope {
       : TextFragment.createEmpty();
   }
 
-  private _groupMatches: Map<number, string>;
-  private _groupMatchTextFragments: Map<number, TextFragment>;
+  concat(other: TextMatch): TextMatch | null {
+    if (
+      this.scopeEnd + 1 !== other.scopeStart &&
+      !this.containsAtStart(other)
+    ) {
+      return null;
+    }
+
+    const groupMatches = new Map([
+      ...Array.from(this._groupMatches.entries()),
+      ...Array.from(
+        other._groupMatches.entries(),
+        (entry) =>
+          [entry[0] + this._nMaxgroupMatches, entry[1]] as [number, string]
+      ),
+    ]);
+    const groupMatchTextFragments = new Map([
+      ...Array.from(this._groupMatchTextFragments.entries()),
+      ...Array.from(
+        other._groupMatchTextFragments.entries(),
+        (entry) =>
+          [entry[0] + this._nMaxgroupMatches, entry[1]] as [
+            number,
+            TextFragment
+          ]
+      ),
+    ]);
+    const overlap = this.scopeEnd - other.scopeStart + 1;
+    const fullMatch = this.fullMatch + other.fullMatch.substring(overlap);
+    const textScope = new TextScope(this.scopeStart, other.scopeEnd);
+
+    return new TextMatch(
+      fullMatch,
+      textScope,
+      groupMatches,
+      groupMatchTextFragments,
+      this._nMaxgroupMatches + other._nMaxgroupMatches
+    );
+  }
+
+  private readonly _nMaxgroupMatches: number;
+  private readonly _groupMatches: Map<number, string>;
+  private readonly _groupMatchTextFragments: Map<number, TextFragment>;
 }
 
 function mergeContent(
@@ -218,9 +275,7 @@ function matchContentGlobalInverse(
     });
   } else {
     inverseRegexMatches.push(
-      ...Array.from(textFragment.blocks, (block) =>
-        RegexMatch.fromTextBlock(block)
-      )
+      ...textFragment.blocks.map((block) => RegexMatch.fromTextBlock(block))
     );
   }
 
@@ -235,16 +290,22 @@ export interface IInverseMatcher {
 }
 
 export class RegexMatcher implements IMatcher, IInverseMatcher {
-  constructor(private readonly _regex: string) {}
+  constructor(
+    private readonly _regex: string,
+    private readonly _matchSingle: boolean = false
+  ) {}
 
   match(textFragment: TextFragment): TextMatch[] {
     if (!textFragment.blocks.length) {
       return [];
     }
-    const regexMatches = matchContentGlobal(textFragment, this._regex);
-    const matches: TextMatch[] = Array.from(
-      regexMatches,
-      (regexMatch) => new TextMatch(regexMatch, textFragment)
+    const regexMatches = matchContentGlobal(
+      textFragment,
+      this._regex,
+      this._matchSingle
+    );
+    const matches: TextMatch[] = regexMatches.map((regexMatch) =>
+      TextMatch.createFromRegexMatch(regexMatch, textFragment)
     );
     return matches;
   }
@@ -254,9 +315,8 @@ export class RegexMatcher implements IMatcher, IInverseMatcher {
       return [];
     }
     const regexMatches = matchContentGlobalInverse(textFragment, this._regex);
-    const matches: TextMatch[] = Array.from(
-      regexMatches,
-      (regexMatch) => new TextMatch(regexMatch, textFragment)
+    const matches: TextMatch[] = regexMatches.map((regexMatch) =>
+      TextMatch.createFromRegexMatch(regexMatch, textFragment)
     );
     return matches;
   }
@@ -287,28 +347,49 @@ export class RemovingRegexMatcher implements IMatcher, IInverseMatcher {
 
   private readonly _regexMatcher: RegexMatcher;
 }
-export class RemovingRegexWithBodyMatcher implements IMatcher {
-  constructor(regex: string) {
-    this._regex = regex + "\\s*{";
-  }
 
-  private matchBody(textFragment: TextFragment): RegexMatch | null {
+export class BodyMatcher implements IMatcher {
+  constructor(private _brackets: string[], private _matchSingle: boolean) {}
+
+  private matchBody(textFragment: TextFragment): RegexMatch[] {
     const [mergedContent, indexHelper] = mergeContent(textFragment);
 
     const bracketedContent = g2BracketParser(mergedContent, {
-      onlyFirst: true,
+      onlyFirst: this._matchSingle,
       ignoreMissMatch: true,
-      brackets: "{",
-    })[0];
+      brackets: this._brackets,
+    });
 
-    if (!bracketedContent?.closed) {
-      return null;
+    return bracketedContent
+      .map((content: any) => {
+        if (!content?.closed) {
+          return;
+        }
+        return RegexMatch.fromArray(
+          [content.content, content.match.content],
+          content.start,
+          indexHelper
+        );
+      })
+      .filter((element: RegexMatch) => element);
+  }
+
+  match(textFragment: TextFragment): TextMatch[] {
+    if (!textFragment.blocks.length) {
+      return [];
     }
-    return RegexMatch.fromArray(
-      [bracketedContent.content, bracketedContent.match.content],
-      bracketedContent.start,
-      indexHelper
+
+    const regexMatches: RegexMatch[] = this.matchBody(textFragment);
+    const matches: TextMatch[] = regexMatches.map((regexMatch) =>
+      TextMatch.createFromRegexMatch(regexMatch, textFragment)
     );
+    return matches;
+  }
+}
+export class RemovingRegexWithBodyMatcher implements IMatcher {
+  constructor(regex: string, bracket: string = "{") {
+    this._regexMatcher = new RegexMatcher(regex + "\\s*" + bracket, true);
+    this._bodyMatcher = new BodyMatcher([bracket], true);
   }
 
   match(textFragment: TextFragment): TextMatch[] {
@@ -318,43 +399,32 @@ export class RemovingRegexWithBodyMatcher implements IMatcher {
 
     const matches: TextMatch[] = [];
     const fragmentEnd = textFragment.getScopeEnd();
-    let matchesFound = true;
-    let lastMatchEndIdx = 0;
 
-    while (matchesFound) {
-      const regexMatches = matchContentGlobal(
-        textFragment.slice(new TextScope(lastMatchEndIdx, fragmentEnd)),
-        this._regex,
-        true
-      );
-      if (regexMatches.length === 1) {
-        const bracketIdx = regexMatches[0].textScope.scopeEnd;
-        const bodyMatch = this.matchBody(
-          textFragment.slice(new TextScope(bracketIdx, fragmentEnd))
-        );
-        if (bodyMatch) {
-          const newMatch = regexMatches[0];
-          newMatch.textScope = new TextScope(
-            regexMatches[0].textScope.scopeStart,
-            bodyMatch.textScope.scopeEnd
-          );
-          newMatch.fullMatch = textFragment
-            .slice(newMatch.textScope)
-            .toString();
-          newMatch.groupMatches.push(...bodyMatch.groupMatches);
-          matches.push(new TextMatch(newMatch, textFragment));
-          lastMatchEndIdx = newMatch.textScope.scopeEnd;
-        } else {
-          matchesFound = false;
-        }
-      } else {
-        matchesFound = false;
+    while (true) {
+      const regexMatch = this._regexMatcher.match(textFragment).pop();
+      if (!regexMatch) {
+        break;
       }
+      const bracketIdx = regexMatch.scopeEnd;
+      const bodyMatch = this._bodyMatcher
+        .match(textFragment.slice(new TextScope(bracketIdx, fragmentEnd)))
+        .pop();
+
+      if (!bodyMatch) {
+        break;
+      }
+
+      const newMatch = regexMatch.concat(bodyMatch);
+      if (!newMatch) {
+        break;
+      }
+      matches.push(newMatch);
+      textFragment.remove(newMatch);
     }
 
-    textFragment.remove(...matches);
     return matches;
   }
 
-  private readonly _regex: string;
+  private readonly _regexMatcher: RegexMatcher;
+  private readonly _bodyMatcher: BodyMatcher;
 }
