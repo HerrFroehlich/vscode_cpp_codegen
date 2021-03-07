@@ -220,68 +220,6 @@ function mergeContent(
   return [mergedContent, indexHelper];
 }
 
-function matchContentGlobal(
-  textFragment: TextFragment,
-  regex: string,
-  matchSingle: boolean = false
-): RegexMatch[] {
-  const regexMatches: RegexMatch[] = [];
-  const regexMatcher = new RegExp(regex, "g");
-  const [mergedContent, indexHelper] = mergeContent(textFragment);
-
-  let rawMatch: any;
-  while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) {
-    if (rawMatch.index === regexMatcher.lastIndex) {
-      regexMatcher.lastIndex++;
-    }
-    regexMatches.push(RegexMatch.fromRegexExec(rawMatch, indexHelper));
-    if (matchSingle) {
-      break;
-    }
-  }
-
-  return regexMatches;
-}
-
-function matchContentGlobalInverse(
-  textFragment: TextFragment,
-  regex: string
-): RegexMatch[] {
-  const inverseRegexMatches: RegexMatch[] = [];
-  const regexMatcher = new RegExp(regex, "g");
-  const [mergedContent, indexHelper] = mergeContent(textFragment);
-  const regexMatchScopes: TextScope[] = [];
-
-  let rawMatch: any;
-  while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) {
-    if (rawMatch.index === regexMatcher.lastIndex) {
-      regexMatcher.lastIndex++;
-    }
-    regexMatchScopes.push(
-      new TextScope(
-        indexHelper.calc(rawMatch.index),
-        indexHelper.calc(rawMatch.index + rawMatch[0].length - 1)
-      )
-    );
-  }
-
-  if (regexMatchScopes.length) {
-    textFragment.blocks.forEach((block) => {
-      block
-        .splice(...regexMatchScopes)
-        .forEach((newBlock) =>
-          inverseRegexMatches.push(RegexMatch.fromTextBlock(newBlock))
-        );
-    });
-  } else {
-    inverseRegexMatches.push(
-      ...textFragment.blocks.map((block) => RegexMatch.fromTextBlock(block))
-    );
-  }
-
-  return inverseRegexMatches;
-}
-
 export interface IMatcher {
   match(textFragment: TextFragment): TextMatch[];
 }
@@ -299,11 +237,7 @@ export class RegexMatcher implements IMatcher, IInverseMatcher {
     if (!textFragment.blocks.length) {
       return [];
     }
-    const regexMatches = matchContentGlobal(
-      textFragment,
-      this._regex,
-      this._matchSingle
-    );
+    const regexMatches = this.matchContentGlobal(textFragment);
     const matches: TextMatch[] = regexMatches.map((regexMatch) =>
       TextMatch.createFromRegexMatch(regexMatch, textFragment)
     );
@@ -314,11 +248,69 @@ export class RegexMatcher implements IMatcher, IInverseMatcher {
     if (!textFragment.blocks.length) {
       return [];
     }
-    const regexMatches = matchContentGlobalInverse(textFragment, this._regex);
+    const regexMatches = this.matchContentGlobalInverse(textFragment);
     const matches: TextMatch[] = regexMatches.map((regexMatch) =>
       TextMatch.createFromRegexMatch(regexMatch, textFragment)
     );
     return matches;
+  }
+
+  matchContentGlobal(textFragment: TextFragment): RegexMatch[] {
+    const regexMatches: RegexMatch[] = [];
+    const regexMatcher = new RegExp(this._regex, "g");
+    const [mergedContent, indexHelper] = mergeContent(textFragment);
+
+    let rawMatch: any;
+    while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) {
+      if (rawMatch.index === regexMatcher.lastIndex) {
+        regexMatcher.lastIndex++;
+      }
+      regexMatches.push(RegexMatch.fromRegexExec(rawMatch, indexHelper));
+      if (this._matchSingle) {
+        break;
+      }
+    }
+
+    return regexMatches;
+  }
+
+  matchContentGlobalInverse(textFragment: TextFragment): RegexMatch[] {
+    const inverseRegexMatches: RegexMatch[] = [];
+    const regexMatcher = new RegExp(this._regex, "g");
+    const [mergedContent, indexHelper] = mergeContent(textFragment);
+    const regexMatchScopes: TextScope[] = [];
+
+    let rawMatch: any;
+    while ((rawMatch = regexMatcher.exec(mergedContent)) !== null) {
+      if (rawMatch.index === regexMatcher.lastIndex) {
+        regexMatcher.lastIndex++;
+      }
+      regexMatchScopes.push(
+        new TextScope(
+          indexHelper.calc(rawMatch.index),
+          indexHelper.calc(rawMatch.index + rawMatch[0].length - 1)
+        )
+      );
+      if (this._matchSingle) {
+        break;
+      }
+    }
+
+    if (regexMatchScopes.length) {
+      textFragment.blocks.forEach((block) => {
+        block
+          .splice(...regexMatchScopes)
+          .forEach((newBlock) =>
+            inverseRegexMatches.push(RegexMatch.fromTextBlock(newBlock))
+          );
+      });
+    } else {
+      inverseRegexMatches.push(
+        ...textFragment.blocks.map((block) => RegexMatch.fromTextBlock(block))
+      );
+    }
+
+    return inverseRegexMatches;
   }
 }
 
@@ -387,9 +379,20 @@ export class BodyMatcher implements IMatcher {
   }
 }
 export class RemovingRegexWithBodyMatcher implements IMatcher {
-  constructor(regex: string, bracket: string = "{") {
-    this._regexMatcher = new RegexMatcher(regex + "\\s*" + bracket, true);
-    this._bodyMatcher = new BodyMatcher([bracket], true);
+  constructor(
+    regex: string,
+    postRegex: string = "",
+    openBracket: string = "{",
+    closeBracket: string = "}"
+  ) {
+    this._regexMatcher = new RegexMatcher(regex + "\\s*" + openBracket, true);
+    this._bodyMatcher = new BodyMatcher([openBracket], true);
+    if (postRegex) {
+      this._postRegexMatcher = new RegexMatcher(
+        "^" + closeBracket + "\\s*" + postRegex,
+        true
+      );
+    }
   }
 
   match(textFragment: TextFragment): TextMatch[] {
@@ -414,7 +417,20 @@ export class RemovingRegexWithBodyMatcher implements IMatcher {
         break;
       }
 
-      const newMatch = regexMatch.concat(bodyMatch);
+      let newMatch = regexMatch.concat(bodyMatch);
+
+      if (newMatch && this._postRegexMatcher) {
+        const bracketIdx = newMatch.scopeEnd;
+        const postRegexMatch = this._postRegexMatcher
+          .match(textFragment.slice(new TextScope(bracketIdx, fragmentEnd)))
+          .pop();
+
+        if (!postRegexMatch) {
+          break;
+        }
+        newMatch = newMatch.concat(postRegexMatch);
+      }
+
       if (!newMatch) {
         break;
       }
@@ -426,5 +442,6 @@ export class RemovingRegexWithBodyMatcher implements IMatcher {
   }
 
   private readonly _regexMatcher: RegexMatcher;
+  private readonly _postRegexMatcher?: RegexMatcher;
   private readonly _bodyMatcher: BodyMatcher;
 }

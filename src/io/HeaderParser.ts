@@ -52,6 +52,7 @@ class ClassMatch {
     ClassMatch.classNameRegex,
     ClassMatch.inheritanceRegex
   );
+  static readonly postBracketRegexStr = "\\s*;";
 
   readonly nameMatch: string;
   readonly inheritanceMatch: string[];
@@ -362,7 +363,10 @@ export abstract class HeaderParser extends CommonParser {
     nameInputProvider?: INameInputProvider
   ): cpp.IClass[] {
     let classes: cpp.IClass[] = [];
-    const matcher = new io.RemovingRegexWithBodyMatcher(ClassMatch.regexStr);
+    const matcher = new io.RemovingRegexWithBodyMatcher(
+      ClassMatch.regexStr,
+      ClassMatch.postBracketRegexStr
+    );
     matcher.match(data).forEach((regexMatch) => {
       const match = new ClassMatch(regexMatch);
       const newClass = match.isInterface
