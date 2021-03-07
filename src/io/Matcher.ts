@@ -385,11 +385,11 @@ export class RemovingRegexWithBodyMatcher implements IMatcher {
     openBracket: string = "{",
     closeBracket: string = "}"
   ) {
-    this._regexMatcher = new RegexMatcher(regex + "\\s*" + openBracket, true);
+    this._regexMatcher = new RegexMatcher(regex + `\\s*\\${openBracket}`, true);
     this._bodyMatcher = new BodyMatcher([openBracket], true);
     if (postRegex) {
       this._postRegexMatcher = new RegexMatcher(
-        "^" + closeBracket + "\\s*" + postRegex,
+        `^\\${closeBracket}\\s*` + postRegex,
         true
       );
     }
