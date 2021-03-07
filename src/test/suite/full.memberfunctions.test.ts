@@ -15,18 +15,18 @@ const args = [
   "int test",
   "int test1, const Class* test2, void* test3",
   "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
-  // "int test = int()",
-  // "int test = int{}",
-  // "int test = int{}, void* test2",
+  "int test = int()",
+  "int test = int{}",
+  "int test = int{}, void* test2",
 ];
 const argsWoInit = [
   "",
   "int test",
   "int test1, const Class* test2, void* test3",
   "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
-  // "int test",
-  // "int test",
-  // "int test, void* test2",
+  "int test",
+  "int test",
+  "int test, void* test2",
 ];
 
 class TestData {

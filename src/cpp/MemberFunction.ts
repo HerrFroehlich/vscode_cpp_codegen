@@ -1,6 +1,7 @@
 import { IFunction } from "./TypeInterfaces";
 import { ClassNameGenerator } from "./ClassNameGenerator";
 import * as io from "../io";
+import { RegexMatcher } from "../io";
 
 export class MemberFunction extends io.TextScope implements IFunction {
   constructor(
@@ -12,6 +13,22 @@ export class MemberFunction extends io.TextScope implements IFunction {
     scope: io.TextScope
   ) {
     super(scope.scopeStart, scope.scopeEnd);
+  }
+
+  static removeDefaultInitializersFromArgs(args: string): string {
+    const regexMatcherCurly = new io.RemovingRegexWithBodyMatcher(
+      "\\s*=[\\s\\S]+"
+    );
+    const regexMatcher = new io.RemovingRegexWithBodyMatcher(
+      "\\s*=[\\s\\S]+",
+      undefined,
+      "(",
+      ")"
+    );
+    const tempFragment = io.TextFragment.createFromString(args);
+    regexMatcherCurly.match(tempFragment);
+    regexMatcher.match(tempFragment);
+    return tempFragment.toString();
   }
 
   async serialize(mode: io.SerializableMode) {
@@ -61,7 +78,7 @@ export class MemberFunction extends io.TextScope implements IFunction {
           "::" +
           this.name +
           " (" +
-          this.args +
+          MemberFunction.removeDefaultInitializersFromArgs(this.args) +
           ")" +
           (this.isConst ? " const" : "")
         );
