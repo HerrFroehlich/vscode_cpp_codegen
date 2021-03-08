@@ -25,7 +25,8 @@ export class StandaloneFunction extends io.TextScope implements IFunction {
 
       case io.SerializableMode.interfaceHeader:
       case io.SerializableMode.implHeader:
-        serial = this.getHeading() + ";";
+        serial =
+          this.returnVal + " " + this.name + " (" + this.args + " )" + ";";
         break;
 
       default:
@@ -33,9 +34,5 @@ export class StandaloneFunction extends io.TextScope implements IFunction {
     }
 
     return serial;
-  }
-
-  private getHeading() {
-    return this.returnVal + " " + this.name + " (" + this.args + " )";
   }
 }
