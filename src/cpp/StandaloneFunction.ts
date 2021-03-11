@@ -1,5 +1,6 @@
 import * as io from "../io";
 import { IFunction } from "./TypeInterfaces";
+import { removeDefaultInitializersFromArgs } from "./utils";
 export class StandaloneFunction extends io.TextScope implements IFunction {
   constructor(
     public readonly name: string,
@@ -15,18 +16,18 @@ export class StandaloneFunction extends io.TextScope implements IFunction {
 
     switch (mode) {
       case io.SerializableMode.source:
-        serial = this.getHeading() + " {\n";
+        serial = this.returnVal + " " + this.name + " (" + removeDefaultInitializersFromArgs(this.args) + " )" + " {\n";
         if (this.returnVal !== "void") {
           serial =
             serial + this.returnVal + " returnValue;\n return returnValue;\n";
         }
-        serial += "}";
+        serial += "}\n";
         break;
 
       case io.SerializableMode.interfaceHeader:
       case io.SerializableMode.implHeader:
         serial =
-          this.returnVal + " " + this.name + " (" + this.args + " )" + ";";
+          this.returnVal + " " + this.name + " (" + this.args + " )" + "\n;";
         break;
 
       default:

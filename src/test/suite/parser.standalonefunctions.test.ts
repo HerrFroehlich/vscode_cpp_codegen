@@ -14,7 +14,6 @@ import {
 } from "../../io";
 
 suite("Parser Standalone Functions Tests", () => {
-  // vscode.window.showInformationMessage('Start all tests.');
 
   test("ParseStandloneFunction", (done) => {
     const testContent = TextFragment.createFromString(

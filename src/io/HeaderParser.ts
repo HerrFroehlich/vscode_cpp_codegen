@@ -17,7 +17,8 @@ class StandaloneFunctionMatch {
   }
 
   static readonly regexStr: string =
-    "((?:const )?\\S*)\\s*(\\S*)\\s*\\(([\\s\\S]*?)\\)\\s*;";
+    "((?:const )?\\S*)\\s*(\\S+)";
+  static readonly postRegexStr: string = ";";
 
   readonly returnValMatch: string;
   readonly nameMatch: string;
@@ -347,8 +348,11 @@ export abstract class HeaderParser extends CommonParser {
   static parseStandaloneFunctiones(data: io.TextFragment): cpp.IFunction[] {
     let standaloneFunctions: cpp.IFunction[] = [];
 
-    const matcher = new io.RemovingRegexMatcher(
-      StandaloneFunctionMatch.regexStr
+    const matcher = new io.RemovingRegexWithBodyMatcher(
+      StandaloneFunctionMatch.regexStr,
+      StandaloneFunctionMatch.postRegexStr,
+      "(",
+      ")"
     );
     matcher.match(data).forEach((regexMatch) => {
       let match = new StandaloneFunctionMatch(regexMatch);
