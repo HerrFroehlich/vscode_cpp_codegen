@@ -11,23 +11,23 @@ import { ClassNameGenerator, MemberFunction } from "../../cpp";
 import { TextFragment, SerializableMode } from "../../io";
 
 const args = [
-  // "",
-  // "int test",
-  // "int test1, const Class* test2, void* test3",
-  // "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
-  // "int test = 3",
-  // "int test = int()",
-  // "int test = int{}",
+  "",
+  "int test",
+  "int test1, const Class* test2, void* test3",
+  "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
+  "int test = 3",
+  "int test = int()",
+  "int test = int{}",
   "int test = int{}, void* test2, std::shared_ptr<Test> test3 = nullptr, Test test4 = Test(1,2,3,4), char* test5",
 ];
 const argsWoInit = [
-  // "",
-  // "int test",
-  // "int test1, const Class* test2, void* test3",
-  // "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
-  // "int test",
-  // "int test",
-  // "int test",
+  "",
+  "int test",
+  "int test1, const Class* test2, void* test3",
+  "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
+  "int test",
+  "int test",
+  "int test",
   "int test, void* test2, std::shared_ptr<Test> test3, Test test4, char* test5",
 ];
 
@@ -47,7 +47,8 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
+
         const testContent = TextFragment.createFromString(
           "int fncName(" + data.arg + ");"
         );
@@ -90,8 +91,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -100,7 +99,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "const int* fncName(" + data.arg + ");"
         );
@@ -143,8 +142,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -153,7 +150,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "std::pair<int, void*> fncName(" + data.arg + ");"
         );
@@ -196,8 +193,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -206,7 +201,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "int fncName(" + data.arg + ") const;"
         );
@@ -249,8 +244,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -259,7 +252,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "virtual int fncName(" + data.arg + ")  ;"
         );
@@ -302,8 +295,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           "virtual int fncName (" + data.arg + ") =0;"
         );
-
-        done();
       }
     );
   });
@@ -312,7 +303,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "int fncName(" + data.arg + ")  override;"
         );
@@ -355,8 +346,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           "virtual int fncName (" + data.arg + ") =0;"
         );
-
-        done();
       }
     );
   });
@@ -365,7 +354,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "virtual int fncName(" + data.arg + ")   const;"
         );
@@ -408,7 +397,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           "virtual int fncName (" + data.arg + ") const =0;"
         );
-        done();
       }
     );
   });
@@ -417,7 +405,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "virtual int fncName(" + data.arg + ") =0;"
         );
@@ -460,8 +448,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -470,7 +456,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "virtual int fncName(" + data.arg + ")   const = 0;"
         );
@@ -513,8 +499,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -523,7 +507,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(
           "static int fncName(" + data.arg + "); "
         );
@@ -566,8 +550,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           ""
         );
-
-        done();
       }
     );
   });
@@ -576,7 +558,7 @@ suite("Full Member Function Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       testData,
-      async function (done: Done, data: TestData) {
+      async function (data: TestData) {
         const testContent = TextFragment.createFromString(`
 		virtual int fncName(${data.arg})   const = 0;
 		virtual int fncName2(${data.arg}) =0;
@@ -734,8 +716,6 @@ suite("Full Member Function Tests", () => {
           await memberFnct.serialize(SerializableMode.interfaceHeader),
           "virtual int fncName5 (" + data.arg + ") =0;"
         );
-
-        done();
       }
     );
   });

@@ -12,7 +12,7 @@ const argData = [
   "int \ttest1,\t\n const\n Class* test2\n, void* test3\n\t",
 ];
 suite("Comments Tests", () => {
-  test("ParseCommentedSingleMemberFunction", (done) => {
+  test("ParseCommentedSingleMemberFunction", () => {
     const testContent = TextFragment.createFromString("//int fncName();");
     const testClassName = "TestClass";
     const classNameGen = new ClassNameGenerator(testClassName, false);
@@ -23,8 +23,6 @@ suite("Comments Tests", () => {
       classNameGen
     );
     assert.strictEqual(parsedFunctions.length, 0);
-
-    done();
   });
 
   describe("ParseBlockCommentedMemberFunction", function () {
@@ -44,13 +42,11 @@ suite("Comments Tests", () => {
           classNameGen
         );
         assert.strictEqual(parsedFunctions.length, 0);
-
-        done();
       }
     );
   });
 
-  test("ParseCommentedAndNonCommentedMemberFunction", (done) => {
+  test("ParseCommentedAndNonCommentedMemberFunction", () => {
     const testContent = TextFragment.createFromString(`
 		int fncName(); 
 		//void fncName2();
@@ -64,7 +60,5 @@ suite("Comments Tests", () => {
       classNameGen
     );
     assert.strictEqual(parsedFunctions.length, 2);
-
-    done();
   });
 });
