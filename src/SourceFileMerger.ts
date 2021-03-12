@@ -1,6 +1,7 @@
 import * as cpp from "./cpp";
 import * as io from "./io";
 import * as vscode from "vscode";
+import { ISignaturable } from "./io";
 export class SourceFileMerger {
   constructor(private _filePath: string, generatedSourceFileContent: string) {
     this._generatedSourceFile = new cpp.SourceFile(
@@ -17,8 +18,9 @@ export class SourceFileMerger {
     const text = textDocument.getText();
 
     const existingSourceFile = new cpp.SourceFile(this._filePath, text);
-    const existingSignatures = existingSourceFile.getSignatures();
-    const generatedSignatures = this._generatedSourceFile.getSignatures();
+    const generatedSignatures = ([] as ISignaturable[]).concat(...this._generatedSourceFile.namespaces.map(ns => ns.getSignatures()));
+    const existingSignatures = ([] as ISignaturable[]).concat(...existingSourceFile.namespaces.map(ns => ns.getSignatures()));
+
 
     const addedSignatures = generatedSignatures.filter(
       (generatedSignature) =>
