@@ -21,12 +21,15 @@ export class Namespace extends io.TextScope implements INamespace {
     serial += await io.serializeArray(this.subnamespaces, mode);
     serial += await io.serializeArray(this.functions, mode);
     serial += await io.serializeArray(this.classes, mode);
-    serial += "\n}";
+    serial += "}";
     return serial;
   }
 
   deserialize(data: io.TextFragment) {
-    this.subnamespaces = HeaderParser.parseNamespaces(data);
+    this.subnamespaces = HeaderParser.parseNamespaces(
+      data,
+      this._nameInputProvider
+    );
     this.classes = HeaderParser.parseClasses(data, this._nameInputProvider);
     this.functions = HeaderParser.parseStandaloneFunctiones(data);
   }
