@@ -125,6 +125,14 @@ export class SourceFileMerger {
 
     const addedFunctionContent: InsertedText[] = [];
     mergedNamespacePairs.forEach((mergedNamespacePair) => {
+      addedFunctionContent.push(
+        ...mergedNamespacePair.generated.signatures.map((signature) => {
+          return {
+            where: mergedNamespacePair.existing.scopeEnd,
+            content: signature.content,
+          };
+        })
+      );
       // yeah yet another recursion.
       if (!mergedNamespacePair.generated.subnamespaces.length) {
         return;
@@ -135,15 +143,6 @@ export class SourceFileMerger {
         mergedNamespacePair.generated.subnamespaces,
         mergedNamespacePair.existing.subnamespaces,
         mergedNamespacePair.existing.scopeEnd
-      );
-
-      addedFunctionContent.push(
-        ...mergedNamespacePair.generated.signatures.map((signature) => {
-          return {
-            where: mergedNamespacePair.existing.scopeEnd,
-            content: signature.content,
-          };
-        })
       );
     });
 
