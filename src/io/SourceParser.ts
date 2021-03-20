@@ -1,15 +1,12 @@
 import { TextScope, TextFragment } from "./Text";
-import {
-  RemovingRegexMatcher,
-  RemovingRegexWithBodyMatcher,
-  TextMatch,
-} from "./Matcher";
-import { ISignaturable } from "./ISignaturable";
+import { RemovingRegexWithBodyMatcher, TextMatch } from "./Matcher";
+import { compareSignaturables, ISignaturable } from "./ISignaturable";
 import {
   NamespaceMatch,
   CommonParser,
   joinStringsWithWhiteSpace,
 } from "./CommonParser";
+import { IDeserializable } from "./ISerial";
 class FunctionDefinitionMatch {
   constructor(regexMatch: TextMatch) {
     this.returnValMatch = regexMatch.getGroupMatch(0);
@@ -78,10 +75,16 @@ class ClassDestructorSignatureMatch {
   readonly classNameMatch: string;
 }
 
-export interface ISourceFileNamespace extends TextScope {
-  getSignatures(): ISignaturable[];
-  deserialize(data: TextFragment): void;
+export interface ISourceFileNamespace extends TextScope, IDeserializable {
+  getAllSignatures(): ISignaturable[];
+  removeContaining(signatures: ISignaturable[]): void;
+  isEmpty(): boolean;
+  forEachNamespace(callback: (namespace: ISourceFileNamespace) => void): void;
+  serialize(): string;
+
   name: string;
+  subnamespaces: ISourceFileNamespace[];
+  signatures: ISignaturable[];
 }
 class SourceFileNamespace extends TextScope implements ISourceFileNamespace {
   constructor(public name: string, scope: TextScope) {
@@ -89,38 +92,108 @@ class SourceFileNamespace extends TextScope implements ISourceFileNamespace {
   }
 
   deserialize(data: TextFragment): void {
-    this._subnamespaces.push(...parseNamespacesFromSourceFile(data));
-    this._signatures.push(...parseSignaturesWithinNamespace(data));
-    this._signatures.forEach((signature) => signature.namespaces.unshift(this.name));
+    this.subnamespaces.push(...parseNamespacesFromSourceFile(data));
+    this.signatures.push(...parseSignaturesWithinNamespace(data));
+    this.signatures.forEach((signature) =>
+      signature.namespaces.unshift(this.name)
+    );
   }
 
-  getSignatures(): ISignaturable[] {
+  getAllSignatures(): ISignaturable[] {
     const signatures = ([] as ISignaturable[]).concat(
-      ...this._subnamespaces.map((ns) => ns.getSignatures())
+      ...this.subnamespaces.map((ns) => ns.getAllSignatures())
     );
-    signatures.forEach((signature) => signature.namespaces.unshift(this.name));
-    signatures.push(...this._signatures);
+    signatures.push(...this.signatures);
     return signatures;
   }
 
-  private _subnamespaces: SourceFileNamespace[] = [];
-  private _signatures: ISignaturable[] = [];
+  removeContaining(signatures: ISignaturable[]): void {
+    if (!signatures.length) {
+      return;
+    }
+
+    this.subnamespaces.forEach((subnamespace) =>
+      subnamespace.removeContaining(signatures)
+    );
+    this.subnamespaces = this.subnamespaces.filter(
+      (subnamespace) => !subnamespace.isEmpty()
+    );
+
+    this.signatures = this.signatures.filter((containingSignature) => {
+      return signatures.every(
+        (signature) => !compareSignaturables(containingSignature, signature)
+      );
+    });
+  }
+
+  isEmpty(): boolean {
+    return (
+      this.subnamespaces.every((subnamespace) => subnamespace.isEmpty()) &&
+      !this.signatures.length
+    );
+  }
+
+  forEachNamespace(callback: (namespace: ISourceFileNamespace) => void): void {
+    this.subnamespaces.forEach((subnamespace) =>
+      subnamespace.forEachNamespace(callback)
+    );
+    callback(this);
+  }
+
+  serialize(): string {
+    let serial = "namespace " + this.name + " {\n\n";
+    serial = this.subnamespaces.reduce((content, subnamespace) => {
+      return content + subnamespace.serialize() + "\n";
+    }, serial);
+    serial = this.signatures.reduce((content, signature) => {
+      return content + signature.content + "\n";
+    }, serial);
+    serial += "}";
+    return serial;
+  }
+
+  subnamespaces: ISourceFileNamespace[] = [];
+  signatures: ISignaturable[] = [];
 }
-class SourceFileNoneNamespace  extends TextScope implements ISourceFileNamespace {
+class SourceFileNoneNamespace
+  extends TextScope
+  implements ISourceFileNamespace {
   name: string = "";
   constructor(scopeStart: number, scopeEnd: number) {
     super(scopeStart, scopeEnd);
   }
 
   deserialize(data: TextFragment): void {
-    this._signatures.push(...parseSignaturesWithinNamespace(data));
+    this.signatures.push(...parseSignaturesWithinNamespace(data));
   }
 
-  getSignatures(): ISignaturable[] {
-    return this._signatures;
+  getAllSignatures(): ISignaturable[] {
+    return this.signatures;
   }
 
-  private _signatures: ISignaturable[] = [];
+  removeContaining(signatures: ISignaturable[]): void {
+    this.signatures = this.signatures.filter((containingSignature) => {
+      signatures.some((signature) =>
+        compareSignaturables(containingSignature, signature)
+      );
+    });
+  }
+
+  isEmpty(): boolean {
+    return !this.signatures.length;
+  }
+
+  forEachNamespace(callback: (namespace: ISourceFileNamespace) => void): void {
+    callback(this);
+  }
+
+  serialize(): string {
+    return this.signatures.reduce((content, signature) => {
+      return content + signature.content;
+    }, "");
+  }
+  subnamespaces: ISourceFileNamespace[] = [];
+  signatures: ISignaturable[] = [];
 }
 
 function parseSignaturesWithinNamespace(data: TextFragment): ISignaturable[] {
@@ -154,9 +227,7 @@ function parseSignaturesWithinNamespace(data: TextFragment): ISignaturable[] {
     signatures.push(signature);
   });
 
-  matcher = new RemovingRegexWithBodyMatcher(
-    FunctionDefinitionMatch.regexStr
-  );
+  matcher = new RemovingRegexWithBodyMatcher(FunctionDefinitionMatch.regexStr);
   matcher.match(data).forEach((regexMatch) => {
     const match = new FunctionDefinitionMatch(regexMatch);
     const funcDefinition: ISignaturable = {
@@ -169,16 +240,15 @@ function parseSignaturesWithinNamespace(data: TextFragment): ISignaturable[] {
     funcDefinition.signature = splittedName[splittedName.length - 1];
     funcDefinition.signature +=
       "(" + match.argsMatch.replace(/\s/g, "") + ")" + match.constMatch;
-    funcDefinition.namespaces = splittedName.slice(
-      0,
-      splittedName.length - 1
-    );
+    funcDefinition.namespaces = splittedName.slice(0, splittedName.length - 1);
     signatures.push(funcDefinition);
   });
   return signatures;
 }
 
-function parseNamespacesFromSourceFile(data: TextFragment): SourceFileNamespace[] {
+function parseNamespacesFromSourceFile(
+  data: TextFragment
+): SourceFileNamespace[] {
   let namespaces: SourceFileNamespace[] = [];
   const matcher = new RemovingRegexWithBodyMatcher(NamespaceMatch.regexStr);
   matcher.match(data).forEach((regexMatch) => {
@@ -196,10 +266,15 @@ function parseNamespacesFromSourceFile(data: TextFragment): SourceFileNamespace[
 
 export abstract class SourceParser extends CommonParser {
   static parseNamespaces(data: TextFragment): ISourceFileNamespace[] {
-    const namespaces = this.parseNamespaces(data);
-    const nonNamespace = new SourceFileNoneNamespace(data.getScopeStart(), data.getScopeStart());
+    const namespaces: ISourceFileNamespace[] = parseNamespacesFromSourceFile(
+      data
+    );
+    const nonNamespace = new SourceFileNoneNamespace(
+      data.getScopeStart(),
+      data.getScopeStart()
+    );
     nonNamespace.deserialize(data);
-    if (nonNamespace.getSignatures().length) {
+    if (nonNamespace.getAllSignatures().length) {
       namespaces.push(nonNamespace);
     }
     return namespaces;
