@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerTextEditorCommand(
       "codegen-cpp.cppSourceFromHeader",
-      async (textEditor, edit) => {
+      async (textEditor) => {
         const fileHandler = FileHandler.createFromHeaderFile(
           textEditor.document,
           { keepFileNameOnWrite: Configuration.getDeduceFileNames() }
@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerTextEditorCommand(
       "codegen-cpp.cppInterfaceImplFromHeader",
-      async (textEditor, edit) => {
+      async (textEditor) => {
         const fileHandler = FileHandler.createFromHeaderFile(
           textEditor.document,
           {

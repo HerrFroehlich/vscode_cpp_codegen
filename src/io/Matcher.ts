@@ -40,7 +40,7 @@ class IndexCalculatorHelperDummy extends IndexCalculatorHelper {
     super();
   }
 
-  addStep(step: IndexStep) {}
+  addStep(/* step: IndexStep */) {}
 
   calc(x: number) {
     return x;
@@ -409,10 +409,10 @@ export class RemovingRegexWithBodyMatcher implements IMatcher {
         break;
       }
       const bracketIdx = regexMatch.scopeEnd;
-      textFragForMatching = textFragment.slice(new TextScope(bracketIdx, fragmentEnd));
-      const bodyMatch = this._bodyMatcher
-        .match(textFragForMatching)
-        .pop();
+      textFragForMatching = textFragment.slice(
+        new TextScope(bracketIdx, fragmentEnd)
+      );
+      const bodyMatch = this._bodyMatcher.match(textFragForMatching).pop();
 
       if (!bodyMatch) {
         continue;
@@ -422,7 +422,9 @@ export class RemovingRegexWithBodyMatcher implements IMatcher {
 
       if (newMatch && this._postRegexMatcher) {
         const bracketIdx = newMatch.scopeEnd;
-        textFragForMatching = textFragment.slice(new TextScope(bracketIdx, fragmentEnd));
+        textFragForMatching = textFragment.slice(
+          new TextScope(bracketIdx, fragmentEnd)
+        );
         const postRegexMatch = this._postRegexMatcher
           .match(textFragForMatching)
           .pop();
