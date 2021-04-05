@@ -1,8 +1,8 @@
 import * as assert from "assert";
 import { Done, describe, it, test } from "mocha";
-import { callItAsync } from "./utils";
-import { HeaderParser } from "../../io/HeaderParser";
-import { TextFragment } from "../../io";
+import { callItAsync } from "../common/utils";
+import { HeaderParser } from "io/HeaderParser";
+import { TextFragment } from "io/Text";
 
 const argData = [
   "",
@@ -23,7 +23,7 @@ suite("Comments Tests", () => {
     callItAsync(
       "With function arguments ${value}",
       argData,
-      async function (done: Done, arg: string) {
+      async function (arg: string) {
         const testContent = TextFragment.createFromString(
           "/* int fncName(" + arg + "); */"
         );

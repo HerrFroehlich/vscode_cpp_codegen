@@ -1,14 +1,6 @@
 import * as assert from "assert";
-import { Done, describe, it, test } from "mocha";
-import { callItAsync } from "./utils";
-import { SourceParser } from "../../io/SourceParser";
-import {
-  TextFragment,
-  SerializableMode,
-  ISerializable,
-  TextScope,
-  compareSignaturables,
-} from "../../io";
+import { test } from "mocha";
+import { TextScope, compareSignaturables } from "io";
 
 const argData = [
   "",

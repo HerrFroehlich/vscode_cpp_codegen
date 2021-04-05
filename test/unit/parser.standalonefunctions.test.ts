@@ -1,20 +1,10 @@
 import * as assert from "assert";
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-import * as vscode from "vscode";
-// import * as myExtension from '../../extension';
-import { HeaderParser } from "../../io/HeaderParser";
-import { IFunction } from "../../cpp";
-import {
-  TextFragment,
-  ISerializable,
-  TextScope,
-  ISignaturable,
-} from "../../io";
+import { HeaderParser } from "io/HeaderParser";
+import { IFunction } from "cpp";
+import { TextFragment, ISerializable, TextScope, ISignaturable } from "io";
 
 suite("Parser Standalone Functions Tests", () => {
-
   test("ParseStandloneFunction", () => {
     const testContent = TextFragment.createFromString(
       `

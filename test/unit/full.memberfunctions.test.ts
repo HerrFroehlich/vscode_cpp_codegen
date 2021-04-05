@@ -1,10 +1,10 @@
 import * as assert from "assert";
 import { describe, test } from "mocha";
-import { callItAsync } from "./utils";
+import { callItAsync } from "../common/utils";
 
-import { HeaderParser } from "../../io/HeaderParser";
-import { MemberFunction } from "../../cpp";
-import { TextFragment, SerializableMode } from "../../io";
+import { HeaderParser } from "io/HeaderParser";
+import { MemberFunction } from "cpp";
+import { TextFragment, SerializableMode } from "io";
 
 const args = [
   "",

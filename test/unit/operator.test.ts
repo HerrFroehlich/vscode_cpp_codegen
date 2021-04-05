@@ -1,14 +1,13 @@
 import * as assert from "assert";
 import { describe, test } from "mocha";
-import { callItAsync } from "./utils";
+import { callItAsync } from "../common/utils";
 
-import { HeaderParser } from "../../io/HeaderParser";
 import {
   MemberFunction,
   PureVirtualMemberFunction,
   VirtualMemberFunction,
-} from "../../cpp";
-import { TextFragment, SerializableMode } from "../../io";
+} from "cpp";
+import { TextFragment, SerializableMode, HeaderParser } from "io";
 
 class OperatorData {
   constructor(

@@ -1,13 +1,13 @@
 import * as assert from "assert";
 import { Done, describe, it, test } from "mocha";
-import { callItAsync } from "./utils";
-import { SourceParser } from "../../io/SourceParser";
+import { callItAsync } from "../common/utils";
 import {
   TextFragment,
   ISignaturable,
   TextScope,
   compareSignaturables,
-} from "../../io";
+  SourceParser,
+} from "io";
 
 const argData = [
   "",

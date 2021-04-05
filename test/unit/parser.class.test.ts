@@ -1,20 +1,10 @@
 import * as assert from "assert";
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-import * as vscode from "vscode";
 import { Done, describe } from "mocha";
-// import * as myExtension from '../../extension';
-import { HeaderParser } from "../../io/HeaderParser";
-import { IClass, ClassInterface, ClassImpl, IClassScope } from "../../cpp";
-import { callItAsync } from "./utils";
+import { HeaderParser } from "io/HeaderParser";
+import { IClass, ClassInterface, ClassImpl, IClassScope } from "cpp";
+import { callItAsync } from "../common/utils";
 
-import {
-  TextFragment,
-  TextScope,
-  compareSignaturables,
-  SerializableMode,
-} from "../../io";
+import { TextFragment, SerializableMode } from "io";
 
 const argData = [
   "",

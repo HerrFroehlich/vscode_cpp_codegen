@@ -1,11 +1,10 @@
 import * as assert from "assert";
 
-import { Done, describe } from "mocha";
-// import * as myExtension from '../../extension';
-import { HeaderParser } from "../../io/HeaderParser";
-import { INamespace, Namespace, NoneNamespace } from "../../cpp";
-import { TextFragment, compareSignaturables, TextScope } from "../../io";
-import { callItAsync } from "./utils";
+import { describe } from "mocha";
+import { HeaderParser } from "io/HeaderParser";
+import { INamespace, Namespace, NoneNamespace } from "cpp";
+import { TextFragment } from "io";
+import { callItAsync } from "../common/utils";
 class TestData {
   constructor(
     public content: string,
