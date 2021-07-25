@@ -4,7 +4,12 @@ import { callItAsync } from "./utils";
 
 import { HeaderParser } from "../../io/HeaderParser";
 import { MemberFunction, FriendFunction } from "../../cpp";
-import { TextFragment, SerializableMode, IClassNameProvider } from "../../io";
+import {
+  TextFragment,
+  SerializableMode,
+  IClassNameProvider,
+  TextScope,
+} from "../../io";
 
 const args = [
   "",
@@ -988,6 +993,57 @@ suite("Full Member Function Tests", () => {
             mode: SerializableMode.interfaceHeader,
           }),
           ""
+        );
+      }
+    );
+  });
+  describe("Do not serialize if not in selection", function () {
+    callItAsync(
+      "With function arguments ${value}",
+      testData,
+      async function (data: TestData) {
+        const testString = `void fncName (${data.arg});`;
+        const testContent = TextFragment.createFromString(testString);
+        const scope = new TextScope(testString.length, testString.length * 2);
+        const parsedFunctions = HeaderParser.parseClassMemberFunctions(
+          testContent,
+          testClassNameProvider
+        );
+        assert.strictEqual(parsedFunctions.length, 1);
+        const serial = await parsedFunctions[0].serialize({
+          mode: SerializableMode.source,
+        });
+        assert.strictEqual(serial.length, 0);
+      }
+    );
+  });
+
+  describe("Serialize if in selection", function () {
+    callItAsync(
+      "With function arguments ${value}",
+      testData,
+      async function (data: TestData) {
+        const testString = `void fncName (${data.arg});`;
+        const testContent = TextFragment.createFromString(testString);
+        const rangeFull = new TextScope(0, testString.length - 1);
+        const rangePartialStart = new TextScope(0, testString.length / 2);
+        const rangePartialEnd = new TextScope(
+          testString.length / 2,
+          testString.length - 1
+        );
+
+        [rangeFull, rangePartialStart, rangePartialEnd].forEach(
+          async (scope) => {
+            const parsedFunctions = HeaderParser.parseClassMemberFunctions(
+              testContent,
+              testClassNameProvider
+            );
+            assert.strictEqual(parsedFunctions.length, 1);
+            const serial = await parsedFunctions[0].serialize({
+              mode: SerializableMode.source,
+            });
+            assert.ok(serial.length);
+          }
         );
       }
     );

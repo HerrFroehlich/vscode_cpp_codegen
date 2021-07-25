@@ -1,4 +1,4 @@
-import { TextFragment } from "./Text";
+import { TextFragment, TextScope } from "./Text";
 export enum SerializableMode {
   header, // matching header file (respective to current file, which is a Source)
   source, // matching source file (respective to current file, which is a Header)
@@ -20,6 +20,7 @@ export interface SerializationOptions {
   mode: SerializableMode;
   nameScopes?: string[];
   nameInputProvider?: INameInputProvider;
+  range?: TextScope;
 }
 
 export interface ISerializable {
