@@ -121,9 +121,34 @@
       },
       {
         "command": "codegen-cpp.cppInterfaceImplFromHeader",
-        "title": "codegen-cpp:  Generate interface implementation source/header files",
+        "title": "codegen-cpp: Generate interface implementation source/header files",
         "when": "editorLangId == cpp",
         "enablement": "resourceExtname =~ /^\\.hpp$|^\\.h$|^\\.hxx$|^\\.hh|^\\.H/"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "codegen-cpp/context/generate",
+          "group": "1_modification",
+          "when": "editorLangId == cpp && resourceExtname =~ /^\\.hpp$|^\\.h$|^\\.hxx$|^\\.hh|^\\.H/"
+        }
+      ],
+      "codegen-cpp/context/generate": [
+        {
+          "command": "codegen-cpp.cppSourceFromHeader",
+          "when": "!editorHasSelection"
+        },
+        {
+          "command": "codegen-cpp.cppInterfaceImplFromHeader",
+          "when": "!editorHasSelection"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "label": "Generate Stubs...",
+        "id": "codegen-cpp/context/generate"
       }
     ]
   },
