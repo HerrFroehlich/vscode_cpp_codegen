@@ -1004,7 +1004,7 @@ suite("Full Member Function Tests", () => {
       async function (data: TestData) {
         const testString = `void fncName (${data.arg});`;
         const testContent = TextFragment.createFromString(testString);
-        const scope = new TextScope(testString.length, testString.length * 2);
+        const range = new TextScope(testString.length, testString.length * 2);
         const parsedFunctions = HeaderParser.parseClassMemberFunctions(
           testContent,
           testClassNameProvider
@@ -1012,6 +1012,7 @@ suite("Full Member Function Tests", () => {
         assert.strictEqual(parsedFunctions.length, 1);
         const serial = await parsedFunctions[0].serialize({
           mode: SerializableMode.source,
+          range,
         });
         assert.strictEqual(serial.length, 0);
       }
@@ -1033,7 +1034,7 @@ suite("Full Member Function Tests", () => {
         );
 
         [rangeFull, rangePartialStart, rangePartialEnd].forEach(
-          async (scope) => {
+          async (range) => {
             const parsedFunctions = HeaderParser.parseClassMemberFunctions(
               testContent,
               testClassNameProvider
@@ -1041,6 +1042,7 @@ suite("Full Member Function Tests", () => {
             assert.strictEqual(parsedFunctions.length, 1);
             const serial = await parsedFunctions[0].serialize({
               mode: SerializableMode.source,
+              range,
             });
             assert.ok(serial.length);
           }

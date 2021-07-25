@@ -247,7 +247,7 @@ class ClassScopeFactory {
   }
 }
 
-class ClassBase extends io.TextScope implements IClass {
+class ClassBaseUnranged extends io.TextScope implements IClass {
   constructor(
     scope: io.TextScope,
     public readonly name: string,
@@ -351,6 +351,7 @@ class ClassBase extends io.TextScope implements IClass {
   private readonly _classNameGen: ClassNameGenerator;
   private _classNameProvider: io.IClassNameProvider;
 }
+class ClassBase extends io.makeRangedSerializable(ClassBaseUnranged) {}
 
 export class ClassImplementation extends ClassBase {
   constructor(

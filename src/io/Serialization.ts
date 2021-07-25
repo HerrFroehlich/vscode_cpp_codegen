@@ -55,3 +55,22 @@ export function serializeArray(
 export interface IDeserializable {
   deserialize: (data: TextFragment) => void;
 }
+
+class ISerializeDummyImpl implements ISerializable {
+  serialize(options: SerializationOptions): string | Promise<string> {
+    throw new Error("This class should not be used directly");
+  }
+}
+type Constructor<T = {}> = new (...args: any[]) => T;
+export function makeRangedSerializable<
+  TBase extends Constructor<TextScope & ISerializeDummyImpl>
+>(base: TBase) {
+  return class RangedSerializable extends base {
+    serialize(options: SerializationOptions): string | Promise<string> {
+      if (options.range && !this.contains(options.range)) {
+        return "";
+      }
+      return super.serialize(options);
+    }
+  };
+}

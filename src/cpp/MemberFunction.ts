@@ -5,8 +5,12 @@ import {
   joinNameScopesWithFunctionName,
 } from "./utils";
 import * as io from "../io";
+import { type } from "os";
 
-export class MemberFunction extends io.TextScope implements IFunction {
+class MemberFunctionBase
+  extends io.TextScope
+  implements IFunction, io.ISerializable
+{
   constructor(
     public readonly name: string,
     public readonly returnVal: string,
@@ -18,7 +22,7 @@ export class MemberFunction extends io.TextScope implements IFunction {
     super(scope.scopeStart, scope.scopeEnd);
   }
 
-  async serialize(options: io.SerializationOptions) {
+  async serialize(options: io.SerializationOptions): Promise<string> {
     let serial = "";
 
     switch (options.mode) {
@@ -76,7 +80,9 @@ export class MemberFunction extends io.TextScope implements IFunction {
     }
   }
 }
-
+export class MemberFunction extends io.makeRangedSerializable(
+  MemberFunctionBase
+) {}
 export class VirtualMemberFunction extends MemberFunction {
   constructor(
     name: string,
