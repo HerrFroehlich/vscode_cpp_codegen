@@ -19,7 +19,11 @@ interface NamespacePair {
 }
 
 export class SourceFileMerger {
-  constructor(private _filePath: string, generatedSourceFileContent: string) {
+  constructor(
+    private _filePath: string,
+    generatedSourceFileContent: string,
+    private _checkRemovedDefintions: boolean
+  ) {
     this._generatedSourceFile = new cpp.SourceFile(
       _filePath,
       generatedSourceFileContent
@@ -34,13 +38,46 @@ export class SourceFileMerger {
     const text = textDocument.getText();
     const existingSourceFile = new cpp.SourceFile(this._filePath, text);
 
-    const generatedSignatures = flatten2dArray(
-      this._generatedSourceFile.namespaces.map((ns) => ns.getAllSignatures())
-    );
     const existingSignatures = flatten2dArray(
       existingSourceFile.namespaces.map((ns) => ns.getAllSignatures())
     );
 
+    if (this._checkRemovedDefintions) {
+      const generatedSignatures = flatten2dArray(
+        this._generatedSourceFile.namespaces.map((ns) => ns.getAllSignatures())
+      );
+      this.checkRemovedDefinitions(
+        existingSignatures,
+        generatedSignatures,
+        existingSourceFile,
+        textDocument,
+        edit
+      );
+    }
+
+    const namespacesWithAddedSignatures: ISourceFileNamespace[] = [
+      ...this._generatedSourceFile.namespaces,
+    ].filter((generatedNamespace) => {
+      generatedNamespace.removeContaining(existingSignatures);
+      return !generatedNamespace.isEmpty();
+    });
+
+    this.mergeOrAddNamespaces(
+      edit,
+      textDocument,
+      namespacesWithAddedSignatures,
+      existingSourceFile.namespaces,
+      text.length
+    );
+  }
+
+  private checkRemovedDefinitions(
+    existingSignatures: io.ISignaturable[],
+    generatedSignatures: io.ISignaturable[],
+    existingSourceFile: cpp.SourceFile,
+    textDocument: vscode.TextDocument,
+    edit: vscode.WorkspaceEdit
+  ) {
     let removedSignatures = existingSignatures.filter(
       (existingSignature) =>
         !generatedSignatures.some((generatedSignature) =>
@@ -68,21 +105,6 @@ export class SourceFileMerger {
       textDocument,
       ...namespacesToBeRemoved,
       ...removedSignatures.map((signature) => signature.textScope)
-    );
-
-    const namespacesWithAddedSignatures: ISourceFileNamespace[] = [
-      ...this._generatedSourceFile.namespaces,
-    ].filter((generatedNamespace) => {
-      generatedNamespace.removeContaining(existingSignatures);
-      return !generatedNamespace.isEmpty();
-    });
-
-    this.mergeOrAddNamespaces(
-      edit,
-      textDocument,
-      namespacesWithAddedSignatures,
-      existingSourceFile.namespaces,
-      text.length
     );
   }
 

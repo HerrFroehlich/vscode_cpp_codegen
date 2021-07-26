@@ -31,6 +31,7 @@ class FileHandlerContext {
   outputFilename: string = "";
   outputContent: SerializedContent[] = [];
   edit = new vscode.WorkspaceEdit();
+  checkForRemovedDefinitionsWhenMerging: boolean = true;
 }
 export class FileHandler {
   private constructor(
@@ -60,7 +61,23 @@ export class FileHandler {
   }
 
   async writeFileAs(...modes: io.SerializableMode[]) {
+    await this._writeFileAs(modes);
+  }
+
+  async writeFileSelectionAs(
+    selection: io.TextScope,
+    ...modes: io.SerializableMode[]
+  ) {
+    await this._writeFileAs(modes, selection); // TODO only add when merging, don't delete
+  }
+
+  private async _writeFileAs(
+    modes: io.SerializableMode[],
+    selection?: io.TextScope
+  ) {
     this._context = new FileHandlerContext();
+    this._context.checkForRemovedDefinitionsWhenMerging =
+      selection === undefined;
 
     if (this._opt.outputDirectory) {
       this._context.outputDirectory = this._opt.outputDirectory;
@@ -72,7 +89,7 @@ export class FileHandler {
       this._context.outputDirectory = mayBeDirectory;
     }
 
-    await this.serializeAll(modes);
+    await this.serializeAll(modes, selection);
     if (this._context.outputFilename.length) {
       //already set
     } else if (this._opt.deduceOutputFileNames) {
@@ -226,7 +243,8 @@ export class FileHandler {
           case io.SerializableMode.source:
             const sourceFileMerger = new SourceFileMerger(
               outputFilePath,
-              outputContent
+              outputContent,
+              this._context.checkForRemovedDefinitionsWhenMerging
             );
             await sourceFileMerger.merge(this._context.edit);
             break;
@@ -309,7 +327,10 @@ export class FileHandler {
     }
   }
 
-  private async serializeAll(modes: io.SerializableMode[]) {
+  private async serializeAll(
+    modes: io.SerializableMode[],
+    selection?: io.TextScope
+  ) {
     const nameInputProvider: io.INameInputProvider = {
       getInterfaceName: this._opt.askForInterfaceImplementationNames
         ? this.getInterfaceName.bind(this)
@@ -318,7 +339,11 @@ export class FileHandler {
 
     return modes.reduce(async (accumulate, mode) => {
       await accumulate;
-      let content = await this._file.serialize({ mode, nameInputProvider });
+      let content = await this._file.serialize({
+        mode,
+        nameInputProvider,
+        range: selection,
+      });
       content = content.trim();
       if (content) {
         this._context.outputContent.push({ mode, content });

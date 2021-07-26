@@ -26,27 +26,62 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  async function createSourceFileStubs(
+    textEditor: vscode.TextEditor,
+    selection?: io.TextScope
+  ) {
+    const fileHandler = FileHandler.createFromHeaderFile(
+      textEditor.document,
+      workspaceDirectoryFinder,
+      config
+    );
+    if (!fileHandler) {
+      console.error("Could not create file handler");
+      return;
+    }
+    try {
+      return selection
+        ? fileHandler.writeFileSelectionAs(
+            selection,
+            io.SerializableMode.source
+          )
+        : fileHandler.writeFileAs(io.SerializableMode.source);
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        "Unable to write source file: " + error.message
+      );
+      return;
+    }
+  }
+
   context.subscriptions.push(
     vscode.commands.registerTextEditorCommand(
       "codegen-cpp.cppSourceFromHeader",
+      async (textEditor, edit) => {
+        createSourceFileStubs(textEditor);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerTextEditorCommand(
+      "codegen-cpp.cppSourceFromHeaderSelection",
       async (textEditor, edit) => {
         const fileHandler = FileHandler.createFromHeaderFile(
           textEditor.document,
           workspaceDirectoryFinder,
           config
         );
-        if (!fileHandler) {
-          console.error("Could not create file handler");
-          return;
-        }
-        try {
-          await fileHandler.writeFileAs(io.SerializableMode.source);
-        } catch (error) {
-          vscode.window.showErrorMessage(
-            "Unable to write source file: " + error.message
-          );
-          return;
-        }
+
+        const selectionStart = textEditor.document.offsetAt(
+          textEditor.selection.anchor
+        );
+        const selectionEnd = textEditor.document.offsetAt(
+          textEditor.selection.end
+        );
+        const selection = new io.TextScope(selectionStart, selectionEnd);
+
+        createSourceFileStubs(textEditor, selection);
       }
     )
   );

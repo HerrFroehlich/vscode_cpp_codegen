@@ -124,6 +124,12 @@
         "title": "codegen-cpp: Generate interface implementation source/header files",
         "when": "editorLangId == cpp",
         "enablement": "resourceExtname =~ /^\\.hpp$|^\\.h$|^\\.hxx$|^\\.hh|^\\.H/"
+      },
+      {
+        "command": "codegen-cpp.cppSourceFromHeaderSelection",
+        "title": "codegen-cpp: Generate source stub(s) for selection",
+        "when": "editorLangId == cpp && editorHasSelection",
+        "enablement": "resourceExtname =~ /^\\.hpp$|^\\.h$|^\\.hxx$|^\\.hh|^\\.H/"
       }
     ],
     "menus": {
@@ -142,6 +148,10 @@
         {
           "command": "codegen-cpp.cppInterfaceImplFromHeader",
           "when": "!editorHasSelection"
+        },
+        {
+          "command": "codegen-cpp.cppSourceFromHeaderSelection",
+          "when": "editorHasSelection"
         }
       ]
     },

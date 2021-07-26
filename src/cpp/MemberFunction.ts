@@ -196,7 +196,7 @@ export class PureVirtualMemberFunction extends MemberFunction {
   }
 }
 
-export class FriendFunction extends io.TextScope implements IFunction {
+class FriendFunctionBase extends io.TextScope implements IFunction {
   constructor(
     public readonly name: string,
     public readonly returnVal: string,
@@ -263,3 +263,6 @@ export class FriendFunction extends io.TextScope implements IFunction {
     }
   }
 }
+export class FriendFunction extends io.makeRangedSerializable(
+  FriendFunctionBase
+) {}
