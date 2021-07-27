@@ -36,6 +36,11 @@ export class ClassConstructor extends io.TextScope implements IConstructor {
   ) {
     super(scope.scopeStart, scope.scopeEnd);
   }
+
+  equals(other: IConstructor): boolean {
+    return this.args === other.args;
+  }
+
   async serialize(options: io.SerializationOptions): Promise<string> {
     let serial = "";
     switch (options.mode) {
@@ -70,6 +75,9 @@ export class ClassDestructor extends io.TextScope implements IDestructor {
     scope: io.TextScope
   ) {
     super(scope.scopeStart, scope.scopeEnd);
+  }
+  equals(other: IDestructor): boolean {
+    return this.virtual === other.virtual;
   }
   async serialize(options: io.SerializationOptions): Promise<string> {
     let serial = "";
@@ -264,6 +272,10 @@ class ClassBase extends io.TextScope implements IClass {
     this.publicScope = scopeFactory.createPublicScope();
     this.privateScope = scopeFactory.createPrivateScope();
     this.protectedScope = scopeFactory.createProtectedScope();
+  }
+
+  equals(other: IClass): boolean {
+    return this.name === other.name;
   }
 
   protected getScopeFactory(classNameProvider: io.IClassNameProvider) {

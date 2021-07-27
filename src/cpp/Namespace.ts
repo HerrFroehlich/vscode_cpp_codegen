@@ -15,6 +15,10 @@ export class Namespace extends io.TextScope implements INamespace {
     this.subnamespaces = [];
   }
 
+  equals(other: INamespace): boolean {
+    return this.name === other.name;
+  }
+
   private addNamespaceToOptions(
     options: io.SerializationOptions
   ): io.SerializationOptions {
@@ -73,6 +77,10 @@ export class NoneNamespace extends io.TextScope implements INamespace {
     this.classes = [];
     this.functions = [];
     this.subnamespaces = [];
+  }
+
+  equals(other: INamespace): boolean {
+    return this.name === other.name;
   }
 
   async serialize(options: io.SerializationOptions) {
