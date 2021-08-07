@@ -266,6 +266,29 @@ class ClassBase extends io.TextScope implements IClass {
     this.protectedScope = scopeFactory.createProtectedScope();
   }
 
+  async provideNames(
+    nameInputProvider: io.INameInputProvider,
+    ...modes: io.SerializableMode[]
+  ): Promise<void> {
+    for (const mode of modes.filter(this.acceptSerializableMode)) {
+      await this._classNameGen.generate(nameInputProvider, mode);
+    }
+
+    for (const scope of [
+      this.publicScope,
+      this.privateScope,
+      this.protectedScope,
+    ]) {
+      for (const subClass of scope.nestedClasses) {
+        await subClass.provideNames(nameInputProvider, ...modes);
+      }
+    }
+  }
+
+  protected acceptSerializableMode(mode: io.SerializableMode): boolean {
+    throw new Error("Method not implemented.");
+  }
+
   protected getScopeFactory(classNameProvider: io.IClassNameProvider) {
     return new ClassScopeFactory(classNameProvider);
   }
@@ -294,7 +317,11 @@ class ClassBase extends io.TextScope implements IClass {
     let serial = "";
     let suffix = "";
 
-    const serializedName = await this._classNameGen.generate(options);
+    if (!this.acceptSerializableMode(options.mode)) {
+      return serial;
+    }
+
+    const serializedName = this._classNameGen.get(options);
 
     switch (options.mode) {
       case io.SerializableMode.header:
@@ -362,20 +389,17 @@ export class ClassImplementation extends ClassBase {
     super(scope, name, inheritance, outerClassNameProvider);
   }
 
-  async serialize(options: io.SerializationOptions) {
-    let serial = "";
-    switch (options.mode) {
+  protected acceptSerializableMode(mode: io.SerializableMode): boolean {
+    switch (mode) {
       case io.SerializableMode.implHeader:
       case io.SerializableMode.implSource:
-        break;
+        return false;
       case io.SerializableMode.source:
       case io.SerializableMode.interfaceHeader:
       case io.SerializableMode.header:
       default:
-        serial = await super.serialize(options);
-        break;
+        return true;
     }
-    return serial;
   }
 }
 
@@ -388,22 +412,18 @@ export class ClassInterface extends ClassBase {
   ) {
     super(scope, name, inheritance, outerClassNameProvider);
   }
-
-  async serialize(options: io.SerializationOptions) {
-    let serial = "";
-    switch (options.mode) {
+  protected acceptSerializableMode(mode: io.SerializableMode): boolean {
+    switch (mode) {
       case io.SerializableMode.source:
         //TODO warning
-        break;
+        return false;
       case io.SerializableMode.interfaceHeader:
       case io.SerializableMode.header:
       case io.SerializableMode.implHeader:
       case io.SerializableMode.implSource:
       default:
-        serial = await super.serialize(options);
-        break;
+        return true;
     }
-    return serial;
   }
 }
 

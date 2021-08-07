@@ -30,6 +30,11 @@ export interface IClass
   readonly protectedScope: IClassScope;
   readonly destructor?: IDestructor;
   readonly inheritance: string[]; // TODO -> IClass?
+
+  provideNames(
+    nameInputProvider: io.INameInputProvider,
+    ...modes: io.SerializableMode[]
+  ): Promise<void>;
 }
 
 export interface INamespace
