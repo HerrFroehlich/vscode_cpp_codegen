@@ -36,7 +36,7 @@ export class ClassConstructor extends io.TextScope implements IConstructor {
   ) {
     super(scope.scopeStart, scope.scopeEnd);
   }
-  async serialize(options: io.SerializationOptions): Promise<string> {
+  serialize(options: io.SerializationOptions): string {
     let serial = "";
     switch (options.mode) {
       case io.SerializableMode.header:
@@ -71,7 +71,7 @@ export class ClassDestructor extends io.TextScope implements IDestructor {
   ) {
     super(scope.scopeStart, scope.scopeEnd);
   }
-  async serialize(options: io.SerializationOptions): Promise<string> {
+  serialize(options: io.SerializationOptions): string {
     let serial = "";
     switch (options.mode) {
       case io.SerializableMode.header:
@@ -128,7 +128,7 @@ class ClassScopeBase implements IClassScope {
     );
   }
 
-  async serialize(options: io.SerializationOptions) {
+  serialize(options: io.SerializationOptions) {
     if (
       !this.constructors.length &&
       !this.nestedClasses.length &&
@@ -154,14 +154,14 @@ class ClassScopeBase implements IClassScope {
         arraySuffix = "\n\n";
         break;
     }
-    serial += await io.serializeArray(
+    serial += io.serializeArray(
       this.constructors,
       options,
       arrayPrefix,
       arraySuffix
     );
-    serial += await io.serializeArray(this.nestedClasses, options, arrayPrefix); // TODO formatting not working for multiline
-    serial += await io.serializeArray(
+    serial += io.serializeArray(this.nestedClasses, options, arrayPrefix); // TODO formatting not working for multiline
+    serial += io.serializeArray(
       this.memberFunctions,
       options,
       arrayPrefix,
@@ -313,7 +313,7 @@ class ClassBase extends io.TextScope implements IClass {
     this.protectedScope.deserialize(data);
   }
 
-  async serialize(options: io.SerializationOptions) {
+  serialize(options: io.SerializationOptions) {
     let serial = "";
     let suffix = "";
 
@@ -342,11 +342,11 @@ class ClassBase extends io.TextScope implements IClass {
     }
 
     if (this.destructor) {
-      serial += (await this.destructor.serialize(options)) + "\n\n";
+      serial += this.destructor.serialize(options) + "\n\n";
     }
-    serial += await this.publicScope.serialize(options);
-    serial += await this.protectedScope.serialize(options);
-    serial += await this.privateScope.serialize(options);
+    serial += this.publicScope.serialize(options);
+    serial += this.protectedScope.serialize(options);
+    serial += this.privateScope.serialize(options);
     serial += suffix;
     return serial;
   }

@@ -23,7 +23,7 @@ export interface SerializationOptions {
 }
 
 export interface ISerializable {
-  serialize: (options: SerializationOptions) => string | Promise<string>;
+  serialize: (options: SerializationOptions) => string;
 }
 
 export interface IFile extends ISerializable, IDeserializable {
@@ -38,17 +38,17 @@ export function serializeArray(
   options: SerializationOptions,
   elementPrefix: string = "",
   elementSuffix: string = ""
-): Promise<string> {
-  return serializableArray.reduce(async (accumulate, serializable) => {
-    let acummulatedSerialized = await accumulate;
-    let serializedElement = await serializable.serialize(options);
+): string {
+  return serializableArray.reduce((accumulate, serializable) => {
+    let acummulatedSerialized = accumulate;
+    let serializedElement = serializable.serialize(options);
     if (!serializedElement.length) {
       return acummulatedSerialized;
     }
     return (
       acummulatedSerialized + elementPrefix + serializedElement + elementSuffix
     );
-  }, Promise.resolve(""));
+  }, "");
 }
 
 export interface IDeserializable {

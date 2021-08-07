@@ -27,7 +27,7 @@ export class Namespace extends io.TextScope implements INamespace {
     return newOptions;
   }
 
-  async serialize(options: io.SerializationOptions) {
+  serialize(options: io.SerializationOptions) {
     const config = Configuration.get();
 
     let serial = "";
@@ -43,9 +43,9 @@ export class Namespace extends io.TextScope implements INamespace {
       options = this.addNamespaceToOptions(options);
     }
 
-    serial += await io.serializeArray(this.subnamespaces, options);
-    serial += await io.serializeArray(this.functions, options);
-    serial += await io.serializeArray(this.classes, options);
+    serial += io.serializeArray(this.subnamespaces, options);
+    serial += io.serializeArray(this.functions, options);
+    serial += io.serializeArray(this.classes, options);
 
     if (!serial.length) {
       return "";
@@ -75,9 +75,9 @@ export class NoneNamespace extends io.TextScope implements INamespace {
     this.subnamespaces = [];
   }
 
-  async serialize(options: io.SerializationOptions) {
-    let serial: string = await io.serializeArray(this.functions, options);
-    serial += await io.serializeArray(this.classes, options);
+  serialize(options: io.SerializationOptions) {
+    let serial: string = io.serializeArray(this.functions, options);
+    serial += io.serializeArray(this.classes, options);
     return serial;
   }
 

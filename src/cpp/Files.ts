@@ -44,8 +44,8 @@ export class HeaderFile extends FileBase implements io.IFile {
     this._namespaces.push(...HeaderParser.parseNoneNamespaces(fileContent));
   }
 
-  async serialize(options: io.SerializationOptions): Promise<string> {
-    return await io.serializeArray(this._namespaces, options, undefined, "\n");
+  serialize(options: io.SerializationOptions): string {
+    return io.serializeArray(this._namespaces, options, undefined, "\n");
   }
 
   private readonly _namespaces: INamespace[];
