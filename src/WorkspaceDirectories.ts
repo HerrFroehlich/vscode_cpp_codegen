@@ -3,23 +3,7 @@ import * as vscode from "vscode";
 import { readFileSync, existsSync, Stats, stat } from "fs";
 import { FSWatcher } from "chokidar";
 import { IExtensionConfiguration } from "./Configuration";
-import anymatch from "anymatch";
-
-// TODO utils
-async function asyncForEach<Type>(
-  array: Type[],
-  asyncIterator: (item: Type, index: number) => void | Promise<void>,
-  onReject?: (error: any) => void
-): Promise<void> {
-  const promises = array.map((item: Type, index: number) =>
-    asyncIterator(item, index)
-  );
-  const allPromise = Promise.all(promises);
-  if (onReject) {
-    allPromise.catch((error) => onReject(error));
-  }
-  await allPromise;
-}
+import { asyncForEach } from "./utils";
 
 const RELATIVE_ROOT = "." + path.sep;
 
