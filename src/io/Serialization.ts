@@ -1,4 +1,6 @@
 import { TextFragment } from "./Text";
+import { flatten } from "lodash";
+
 export enum SerializableMode {
   header, // matching header file (respective to current file, which is a Source)
   source, // matching source file (respective to current file, which is a Header)
@@ -7,13 +9,37 @@ export enum SerializableMode {
   interfaceHeader, // interface header file (respective to current file, which has a class with  virtual functions => pure virtual ones are generated)
 }
 
+const HEADER_SOURCE_GROUP = [SerializableMode.header, SerializableMode.source];
+const INTERFACE_IMPLEMENTATION_GROUP = [
+  SerializableMode.implHeader,
+  SerializableMode.implSource,
+];
+
+export function getSerializableModeGroup(
+  mode: SerializableMode
+): SerializableMode[] {
+  return flatten(
+    [
+      INTERFACE_IMPLEMENTATION_GROUP,
+      HEADER_SOURCE_GROUP,
+      [SerializableMode.interfaceHeader],
+    ].filter((group) => group.includes(mode))
+  );
+}
 export interface IClassNameProvider {
   getClassName(mode: SerializableMode, withOuterScope: boolean): string;
   originalName: string;
 }
 
 export interface INameInputProvider {
-  getInterfaceName?(origName: string): string | Promise<string>;
+  getImplementationName(origName: string): string | Promise<string>;
+}
+
+export interface INameInputReceiver {
+  provideNames(
+    nameInputProvider: INameInputProvider,
+    ...modes: SerializableMode[]
+  ): Promise<void>;
 }
 
 export interface SerializationOptions {

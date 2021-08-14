@@ -6,6 +6,7 @@ import {
   SourceFileNamespaceSerialization,
 } from "../Configuration";
 import clone = require("clone");
+import { asyncForEach } from "../utils";
 export class Namespace extends io.TextScope implements INamespace {
   constructor(name: string, scope: io.TextScope) {
     super(scope.scopeStart, scope.scopeEnd);
@@ -13,6 +14,18 @@ export class Namespace extends io.TextScope implements INamespace {
     this.classes = [];
     this.functions = [];
     this.subnamespaces = [];
+  }
+
+  async provideNames(
+    nameInputProvider: io.INameInputProvider,
+    ...modes: io.SerializableMode[]
+  ): Promise<void> {
+    const subNameInputReceiver: io.INameInputReceiver[] = (
+      this.classes as io.INameInputReceiver[]
+    ).concat(this.subnamespaces);
+    return asyncForEach(subNameInputReceiver, async (receiver) =>
+      receiver.provideNames(nameInputProvider, ...modes)
+    );
   }
 
   private addNamespaceToOptions(
@@ -73,6 +86,18 @@ export class NoneNamespace extends io.TextScope implements INamespace {
     this.classes = [];
     this.functions = [];
     this.subnamespaces = [];
+  }
+
+  async provideNames(
+    nameInputProvider: io.INameInputProvider,
+    ...modes: io.SerializableMode[]
+  ): Promise<void> {
+    const subNameInputReceiver: io.INameInputReceiver[] = (
+      this.classes as io.INameInputReceiver[]
+    ).concat(this.subnamespaces);
+    return asyncForEach(subNameInputReceiver, async (receiver) =>
+      receiver.provideNames(nameInputProvider, ...modes)
+    );
   }
 
   serialize(options: io.SerializationOptions) {

@@ -10,6 +10,7 @@ import * as io from "../io";
 import { joinNameScopesWithFunctionName, joinNameScopes } from "./utils";
 import { ClassNameGenerator } from "./ClassNameGenerator";
 import * as vscode from "vscode";
+import { asyncForEach } from "../utils";
 
 function getCtorDtorImplName(
   classNameProvider: io.IClassNameProvider,
@@ -270,19 +271,22 @@ class ClassBase extends io.TextScope implements IClass {
     nameInputProvider: io.INameInputProvider,
     ...modes: io.SerializableMode[]
   ): Promise<void> {
-    for (const mode of modes.filter(this.acceptSerializableMode)) {
-      await this._classNameGen.generate(nameInputProvider, mode);
-    }
+    const generatePromises = this._classNameGen.generate(
+      nameInputProvider,
+      ...modes.filter(this.acceptSerializableMode)
+    );
 
-    for (const scope of [
-      this.publicScope,
-      this.privateScope,
-      this.protectedScope,
-    ]) {
-      for (const subClass of scope.nestedClasses) {
-        await subClass.provideNames(nameInputProvider, ...modes);
-      }
-    }
+    const subclassPromises = asyncForEach(
+      [this.publicScope, this.privateScope, this.protectedScope],
+      async (scope) =>
+        asyncForEach(scope.nestedClasses, (subClass) =>
+          subClass.provideNames(nameInputProvider, ...modes)
+        )
+    );
+
+    return Promise.all([generatePromises, subclassPromises]).then(
+      () => undefined
+    );
   }
 
   protected acceptSerializableMode(mode: io.SerializableMode): boolean {

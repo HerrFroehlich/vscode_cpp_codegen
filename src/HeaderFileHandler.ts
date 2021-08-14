@@ -7,79 +7,204 @@ import { SourceFileMerger } from "./SourceFileMerger";
 import * as cpp from "./cpp";
 import * as io from "./io";
 import * as vscode from "vscode";
-import * as fs from "fs";
+import * as ui from "./ui";
 import * as path from "path";
 import {
   IExtensionConfiguration,
   DirectorySelectorMode,
 } from "./Configuration";
-import { asyncForEach } from "./utils";
+import { asyncForEach, awaitMapEntries } from "./utils";
+import { flatten, compact } from "lodash";
+import { resolve } from "dns";
 
 interface SerializedContent {
   mode: io.SerializableMode;
   outputUri: vscode.Uri;
   content: string;
 }
-class FileHandlerContext {
-  constructor(public readonly edit: vscode.WorkspaceEdit) {}
-  outputDirectory!: vscode.Uri; // TODO
-  outputFilename: string = "";
+
+interface IImplementationNameHelper {
+  get firstImplementationName(): Promise<string> | undefined;
+}
+
+class ImplementationNameHelper
+  implements IImplementationNameHelper, io.INameInputProvider
+{
+  private _firstImplementationName: Promise<string> | undefined;
+  private _onFirstCallPromise: Promise<IImplementationNameHelper>;
+  private _resolveOnFirstCall:
+    | ((value: IImplementationNameHelper) => void)
+    | undefined;
+
+  constructor(
+    private readonly _implNameProviderClosure: (
+      origName: string
+    ) => Promise<string>
+  ) {
+    this._onFirstCallPromise = new Promise<IImplementationNameHelper>(
+      (resolve) => {
+        this._resolveOnFirstCall = resolve;
+      }
+    );
+  }
+
+  getImplementationName(origName: string): string | Promise<string> {
+    const implNamePromise = this._implNameProviderClosure(origName);
+    if (this._resolveOnFirstCall) {
+      this._firstImplementationName = implNamePromise;
+      this._resolveOnFirstCall(this);
+      this._resolveOnFirstCall = undefined;
+    }
+    return implNamePromise;
+  }
+
+  get onFirstCall(): Promise<IImplementationNameHelper> {
+    return this._onFirstCallPromise;
+  }
+
+  get firstImplementationName(): Promise<string> | undefined {
+    return this._firstImplementationName;
+  }
 }
 
 export class HeaderFileHandler {
-  private _context: FileHandlerContext;
+  private _userInput: ui.UserInput;
 
   constructor(
     private readonly _headerFile: cpp.HeaderFile,
-    edit: vscode.WorkspaceEdit,
+    private readonly _edit: vscode.WorkspaceEdit,
     private readonly _workspaceDirectoryFinder: WorkspaceDirectoryFinder,
     private readonly _opt: IExtensionConfiguration
   ) {
-    this._context = new FileHandlerContext(edit);
+    this._userInput = new ui.UserInput();
   }
 
   async writeFileAs(...modes: io.SerializableMode[]) {
-    this.createClassNames(modes);
-    this.selectOutputDirectory();
+    const outputDirectoryPromise = this.pickOutputDirectory();
+    const helper = await this.pickInterfaceImplementationNames(modes);
+    const fileNamePromiseMap = this.getFileNameForMode(
+      modes,
+      helper?.firstImplementationName
+    );
 
-    //await userInput.prompt();
-    // check ctx
+    await this._userInput.prompt();
+    const outputDirectory = await outputDirectoryPromise;
+    const fileNameMap = await awaitMapEntries(fileNamePromiseMap);
 
-    const outputContent = this.serializeContent(modes);
-    this.writeNewContent(outputContent);
-
-    await vscode.workspace.applyEdit(this._context.edit);
+    const outputContent = this.serializeContent(
+      modes,
+      outputDirectory,
+      fileNameMap
+    );
+    await this.writeNewContent(outputContent);
+    await vscode.workspace.applyEdit(this._edit);
     await asyncForEach(outputContent, async (serialized) => {
       await vscode.window.showTextDocument(serialized.outputUri);
     });
   }
 
-  private async createClassNames(modes: io.SerializableMode[]) {
-    await asyncForEach(this._headerFile.namespaces, async (namespace) => {
-      for (const c of namespace.classes) {
-        await c.provideNames({} as io.INameInputProvider, ...modes); // TODO
+  private pickOutputDirectory(): Promise<vscode.Uri> {
+    return this._userInput.registerElement(
+      ui.DirectoryPicker,
+      this._workspaceDirectoryFinder,
+      this._opt.outputDirectorySelector.mode,
+      vscode.Uri.file(this._headerFile.directory)
+    );
+  }
+
+  private pickInterfaceImplementationNames(
+    modes: io.SerializableMode[]
+  ): Promise<IImplementationNameHelper | undefined> {
+    const helper = new ImplementationNameHelper((origName) =>
+      this._userInput.registerElement(ui.InterfaceNamePicker, origName)
+    );
+
+    const namesProvidePromise = asyncForEach(
+      this._headerFile.namespaces,
+      (namespace) => namespace.provideNames(helper, ...modes)
+    ).then(() => undefined);
+
+    return Promise.race([namesProvidePromise, helper.onFirstCall]);
+  }
+
+  private getFileNameForMode(
+    modes: io.SerializableMode[],
+    firstImplementationNamePromise?: Promise<string>
+  ): Map<io.SerializableMode, Promise<string>> {
+    const fileNameMap = new Map<io.SerializableMode, Promise<string>>();
+
+    for (const mode of modes) {
+      if (!fileNameMap.has(mode)) {
+        const fileNamePromise = this.pickFileName(
+          mode,
+          firstImplementationNamePromise
+        );
+        io.getSerializableModeGroup(mode).forEach((groupMode) =>
+          fileNameMap.set(groupMode, fileNamePromise)
+        );
       }
-    });
+    }
+
+    return fileNameMap;
   }
 
-  private async selectOutputDirectory(): Promise<vscode.Uri> {
-    throw new Error("Method not implemented.");
+  private pickFileName(
+    mode: io.SerializableMode,
+    firstImplementationNamePromise?: Promise<string>
+  ): Promise<string> {
+    const isImplMode =
+      mode === io.SerializableMode.implSource ||
+      mode === io.SerializableMode.implHeader;
+    const cannotDeduce = isImplMode && !firstImplementationNamePromise;
+
+    if (!this._opt.deduceOutputFileNames || cannotDeduce) {
+      return this._userInput.registerElement(
+        ui.FileNamePicker,
+        this._headerFile.basename
+      );
+    } else if (isImplMode) {
+      return firstImplementationNamePromise!;
+    } else {
+      return Promise.resolve(this._headerFile.basename);
+    }
   }
 
-  private serializeContent(modes: io.SerializableMode[]): SerializedContent[] {
-    return modes.map((mode) => {
+  private serializeContent(
+    modes: io.SerializableMode[],
+    outputDirectory: vscode.Uri,
+    fileNameMap: Map<io.SerializableMode, string>
+  ): SerializedContent[] {
+    const modesWithFilenames = compact(
+      modes.map((mode) => {
+        const fileName = fileNameMap.get(mode);
+        if (fileName) {
+          return { mode, fileName };
+        }
+      })
+    );
+
+    return modesWithFilenames.map((zip) => {
+      const mode = zip.mode;
       const fileHeader = this.createFileHeader(
         mode,
-        this._context.outputDirectory?.fsPath ?? "", // TODO
-        this._context.outputFilename
+        outputDirectory.fsPath,
+        zip.fileName
       );
       const fileBody = this._headerFile.serialize({ mode });
-      const outputUri = this.getOutputFileUri(mode);
+      const outputUri = this.getOutputFileUri(
+        mode,
+        outputDirectory,
+        zip.fileName
+      );
       return { mode, outputUri, content: fileHeader + fileBody };
     });
   }
-  private getOutputFileUri(mode: io.SerializableMode): vscode.Uri {
-    let fileName = this._context.outputFilename;
+
+  private getOutputFileUri(
+    mode: io.SerializableMode,
+    outputDirectory: vscode.Uri,
+    fileName: string
+  ): vscode.Uri {
     switch (mode) {
       case io.SerializableMode.header:
       case io.SerializableMode.interfaceHeader:
@@ -91,7 +216,7 @@ export class HeaderFileHandler {
         fileName += "." + this._opt.outputFileExtension.forCppSource;
         break;
     }
-    return vscode.Uri.joinPath(this._context.outputDirectory, fileName);
+    return vscode.Uri.joinPath(outputDirectory, fileName);
   }
 
   private createFileHeader(
@@ -144,8 +269,8 @@ export class HeaderFileHandler {
     return fileHeader;
   }
 
-  private writeNewContent(outputContent: SerializedContent[]) {
-    asyncForEach(outputContent, async (serialized) => {
+  private async writeNewContent(outputContent: SerializedContent[]) {
+    await asyncForEach(outputContent, async (serialized) => {
       let existingDocument: vscode.TextDocument | undefined;
       try {
         existingDocument = await vscode.workspace.openTextDocument(
@@ -156,29 +281,33 @@ export class HeaderFileHandler {
       }
 
       if (existingDocument) {
-        this.mergeFiles(serialized);
+        this.mergeFiles(existingDocument, serialized);
       } else {
         this.createNewFile(serialized);
       }
     });
   }
-  createNewFile(serialized: SerializedContent) {
-    this._context.edit.createFile(serialized.outputUri);
-    this._context.edit.insert(
+
+  private createNewFile(serialized: SerializedContent) {
+    this._edit.createFile(serialized.outputUri);
+    this._edit.insert(
       serialized.outputUri,
       new vscode.Position(0, 0),
       serialized.content
     );
   }
 
-  private mergeFiles(serialized: SerializedContent) {
+  private mergeFiles(
+    existingDocument: vscode.TextDocument,
+    serialized: SerializedContent
+  ) {
     switch (serialized.mode) {
       case io.SerializableMode.source:
         const sourceFileMerger = new SourceFileMerger(
-          serialized.outputUri.fsPath, // TODO
+          serialized.outputUri.fsPath,
           serialized.content
         );
-        sourceFileMerger.merge(this._context.edit);
+        sourceFileMerger.merge(existingDocument, this._edit);
         break;
 
       default:

@@ -10,15 +10,17 @@ export class ClassNameGenerator {
 
   async generate(
     nameInputProvider: io.INameInputProvider,
-    mode: io.SerializableMode
+    ...modes: io.SerializableMode[]
   ): Promise<void> {
-    switch (mode) {
-      case io.SerializableMode.implHeader:
-      case io.SerializableMode.implSource:
-        await this.createImplName(nameInputProvider, mode);
-      case io.SerializableMode.interfaceHeader:
-        return this.createInterfaceName();
-      default:
+    for (const mode of modes) {
+      switch (mode) {
+        case io.SerializableMode.implHeader:
+        case io.SerializableMode.implSource:
+          await this.createImplName(nameInputProvider, mode);
+        case io.SerializableMode.interfaceHeader:
+          this.createInterfaceName();
+        default:
+      }
     }
   }
 
@@ -50,15 +52,7 @@ export class ClassNameGenerator {
   ) {
     let implName = this._createdNames.get(mode);
     if (!implName) {
-      if (nameInputProvider?.getInterfaceName) {
-        implName = await nameInputProvider.getInterfaceName(this._origName);
-      }
-      // TODO naming conventions config
-      else if (this._origName.startsWith("I")) {
-        implName = this._origName.substring(1);
-      } else {
-        implName = this._origName + "Impl";
-      }
+      implName = await nameInputProvider.getImplementationName(this._origName);
       this._createdNames.set(io.SerializableMode.implHeader, implName);
       this._createdNames.set(io.SerializableMode.implSource, implName);
     }

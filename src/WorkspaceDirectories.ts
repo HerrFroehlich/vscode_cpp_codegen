@@ -31,7 +31,9 @@ export class GoBackItem implements vscode.QuickPickItem {
   public alwaysShow = true;
   goBack(childPath: string): string {
     const parentPath =
-      childPath === RELATIVE_ROOT ? childPath : path.join(childPath, "..");
+      childPath === RELATIVE_ROOT
+        ? childPath
+        : RELATIVE_ROOT + path.join(childPath, "..");
     return addEndingSlashToPath(parentPath);
   }
 }
