@@ -1,18 +1,21 @@
 import * as fc from 'fast-check';
 import { describe, it } from "mocha";
 
-const validStringName = fc.string().filter(s => /^[a-zA-Z0-9&*<>:]+$/.test(s));
-const randomWhiteSpace = fc.string().filter(s => /^[\s]*$/.test(s));
+const validStringArbitrary = fc.string().filter(s => /^[a-zA-Z0-9&*<>:]+$/.test(s));
+
+const whiteSpaceChars = ['\b', '\n', '\r', '\t'];
+const whiteSpaceCharArbitrary = fc.integer({min: 0, max:whiteSpaceChars.length-1}).map(i => whiteSpaceChars[i]);
+const whiteSpaceStringArbitrary = fc.stringOf(whiteSpaceCharArbitrary);
 
 const memberFunctionArbitrary = fc.record({ //TODO friend + operator
     isVirtual: fc.boolean(),
     isPure: fc.boolean(),
     isStatic: fc.boolean(),
     isConst: fc.boolean(),
-    returnValues: fc.array(validStringName, {minLength: 1}),
-    functionName: validStringName,
-    functionArguments: fc.array(fc.array(validStringName)),
-    whiteSpaceGenerator: fc.infiniteStream(randomWhiteSpace)
+    returnValues: fc.array(validStringArbitrary, {minLength: 1}),
+    functionName: validStringArbitrary,
+    functionArguments: fc.array(fc.array(validStringArbitrary)),
+    whiteSpaceGenerator: fc.infiniteStream(whiteSpaceStringArbitrary)
 }).filter(t => !(t.isPure && !t.isVirtual) && !(t.isStatic && t.isVirtual) )
 .map(t => {
     const addTrailingWhitespace = (s: string) => s + t.whiteSpaceGenerator.next().value;
@@ -55,7 +58,7 @@ describe('Member function property tests', () => {
     it.only('test', () => {
         console.log(        fc.sample(
             memberFunctionArbitrary, // arbitrary or property to extract the values from
-            10             // number of values to extract
-        ));
+            1             // number of values to extract
+        )[0]);
     });
 });
